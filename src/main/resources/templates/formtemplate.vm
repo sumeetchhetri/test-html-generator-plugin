@@ -513,8 +513,15 @@
 						var dtcls = "";
 						if(schema.type=='date')
 							dtcls = "clsDatePicker";
-						
-						return ("<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><br/><input "+labinpdet+" "+nmdef+" "+extra+" class=\"form-control "+addclas+""+dtcls+"\" onblur=\"validate(this, '"+schema.type+"')\" value=\""+valut+"\" style=\"width: 70%; height: 30px;\" type='text'/></div>");
+						if(schema.hasOwnProperty('enum'))
+						{
+							var htm = "<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><br/><select "+labinpdet+" "+nmdef+" "+extra+" class=\"form-control "+addclas+""+dtcls+"\" style=\"width: 70%; height: 30px;\">";
+							for(var i=0;i<schema.enum.length;i++)
+								htm += "<option value=\""+schema.enum[i]+"\">"+schema.enum[i]+"</option>";
+							return htm + ("</select></div>");
+						}
+						else
+							return ("<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><br/><input "+labinpdet+" "+nmdef+" "+extra+" class=\"form-control "+addclas+""+dtcls+"\" onblur=\"validate(this, '"+schema.type+"')\" value=\""+valut+"\" style=\"width: 70%; height: 30px;\" type='text'/></div>");
 				  }
 				  else if(schema.type=='object')
 				  {
@@ -674,7 +681,16 @@
 								</div> \
 							#end
 							#end
-							');	
+							<div class="control-group form-request_content" style="display:none"> \
+								<label>Content-Type&nbsp; \
+								</label> \
+								<div class="controls"> \
+								<select class="form-control" style="width: 70%; height: 30px;"> \
+									<option value="application/json">JSON</option> \
+									<option value="application/xml">XML</option> \
+								</select> \
+								</div> \
+							</div>');	
 						
 						$('.map_key_cls').each(function() {
 							if(this.nodeName.toLowerCase()=="input")
@@ -694,7 +710,7 @@
 							$('#req-txtarea').autosize();
 							$('#req-txtarea').parent().hide();
 						}
-						$('.clsDatePicker').datetimepicker({format: 'Y-m-d\\TH:i:s.000\\Z'});
+						$('.clsDatePicker').datetimepicker({format: 'Y-m-d\\TH:i:s.000\\Z', step:1, validateOnBlur:false});
 						$('#$formName').append(
 						#if(!$consumes.equals("multipart/form-data"))
 								'<div class="control-group"> \
@@ -722,7 +738,7 @@
 							#end
 						);
 						#else
-						$('.clsDatePicker').datetimepicker({format: 'Y-m-d\\TH:i:s.000\\Z'});
+						$('.clsDatePicker').datetimepicker({format: 'Y-m-d\\TH:i:s.000\\Z', step:1, validateOnBlur:false});
 						#end
 					});
 				}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <plugins>
+    <plugin>
+      <name>test-html-generator-plugin</name>
+      <prefix>test-html-generator</prefix>
+      <artifactId>test-html-generator-plugin</artifactId>
+    </plugin>
+  </plugins>
+</metadata>

@@ -82,6 +82,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.testgen.view.Validation;
 import com.testgen.view.ViewField;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
  * @author Sumeet Chhetri<br/>
@@ -117,45 +119,45 @@ import com.testgen.view.ViewField;
  * 		<resourcepath>src/main/resources</resourcepath>
  * 		<uripath>testgen</uripath>
  * 		<copywright>Testgen 2012</copywright>
- * 		<login-path>login</login-path>
- * 		<login-meth>POST</login-meth>
- * 		<auth-extract>token,json</auth-extract>
+ * 		<loginpath>login</loginpath>
+ * 		<loginmeth>POST</loginmeth>
+ * 		<authextract>token,json</authextract>
  * 		<!-- XML xpath value
- * 			<auth-extract>//node//token,xml</auth-extract>
+ * 			<authextract>//node//token,xml</authextract>
  * 		-->
  * 		<!-- 
- * 			<auth-extract>token,plain</auth-extract>
+ * 			<authextract>token,plain</authextract>
  * 		-->
  * 		<!-- 
- * 			<auth-extract>COOKIE-ID,cookie</auth-extract>
+ * 			<authextract>COOKIE-ID,cookie</authextract>
  * 		-->
  * 		<!-- 
- * 			<auth-extract>token,header</auth-extract>
+ * 			<authextract>token,header</authextract>
  * 		-->
- * 		<api-auth>token,queryparam</api-auth>
+ * 		<apiauth>token,queryparam</apiauth>
  * 		<!-- 
- * 			<api-auth>token,postparam</api-auth>
- * 		-->
- * 		<!-- 
- * 			<api-auth>token,header</api-auth>
- * 		-->
- * 		<login-user>username,header</login-user>
- * 		<login-pass>password,header</login-pass>					
- * 		<!-- 
- * 			<login-user>username,postparam</login-user>
- * 			<login-pass>password,postparam</login-pass>
+ * 			<apiauth>token,postparam</apiauth>
  * 		-->
  * 		<!-- 
- * 			<login-user>username,queryparam</login-user>
- * 			<login-pass>password,queryparam</login-pass>
+ * 			<apiauth>token,header</apiauth>
+ * 		-->
+ * 		<loginuser>username,header</loginuser>
+ * 		<loginpass>password,header</loginpass>					
+ * 		<!-- 
+ * 			<loginuser>username,postparam</loginuser>
+ * 			<loginpass>password,postparam</loginpass>
  * 		-->
  * 		<!-- 
- * 			<login-user>username,json</login-user>
- * 			<login-pass>password,json</login-pass>
+ * 			<loginuser>username,queryparam</loginuser>
+ * 			<loginpass>password,queryparam</loginpass>
  * 		-->
  * 		<!-- 
- * 			<login-user>username,authbasic</login-user>
- * 			<login-pass>password,authbasic</login-pass>
+ * 			<loginuser>username,json</loginuser>
+ * 			<loginpass>password,json</loginpass>
+ * 		-->
+ * 		<!-- 
+ * 			<loginuser>username,authbasic</loginuser>
+ * 			<loginpass>password,authbasic</loginpass>
  * 		-->
  * 	</configuration>
  * 	<executions>
@@ -392,10 +394,10 @@ public class TestGeneratorMojo extends AbstractMojo
         this.uripath = uripath;
     }
 
-    @Parameter(alias = "auth-extract")
+    @Parameter(alias = "authextract")
     private String authExtract;
 
-    @Parameter(alias = "api-auth")
+    @Parameter(alias = "apiauth")
     private String apiAuth;
 
     /**
@@ -430,16 +432,16 @@ public class TestGeneratorMojo extends AbstractMojo
         this.apiAuth = apiAuth;
     }
 
-    @Parameter(alias = "login-path")
+    @Parameter(alias = "loginpath")
     private String loginpath;
 
-    @Parameter(alias = "login-user")
+    @Parameter(alias = "loginuser")
     private String loginuser;
 
-    @Parameter(alias = "login-pass")
+    @Parameter(alias = "loginpass")
     private String loginpass;
 
-    @Parameter(alias = "login-meth")
+    @Parameter(alias = "loginmeth")
     private String loginmeth;
 
     /**
@@ -506,7 +508,7 @@ public class TestGeneratorMojo extends AbstractMojo
         this.loginmeth = loginmeth;
     }
 
-    @Parameter(alias = "debug-enabled")
+    @Parameter(alias = "debugEnabled")
     private boolean debugEnabled;
 
     /**
@@ -546,7 +548,18 @@ public class TestGeneratorMojo extends AbstractMojo
 	public void setRequestContentType(String requestContentType) {
 		this.requestContentType = requestContentType;
 	}
+	
+	@Parameter(alias = "enabled", defaultValue="true")
+	private boolean enabled;
 
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+	
 	public static class LinkObject {
     	private String name;
     	private String href;
@@ -3586,71 +3599,47 @@ public class TestGeneratorMojo extends AbstractMojo
         }
     }
 
-    public static void main(String[] args1) throws Exception
+    public static void main(String[] args) throws Exception
     {
-        // System.out.println("asdas <br/>asdas ".matches("<.*>|.*<.*>.*|.*<.*>|<.*>.*"));
-
-        TestGeneratorMojo testGenerator = new TestGeneratorMojo();
-        testGenerator.setDocTestPaths(new String[] { "com.testgen.inspect" });
-        /*
-         * for (String packageName : args1) { testGenerator.generate(packageName); }
-         */
-        System.out.println(Pattern
-                .compile(".*class\\s+(\\w+)(\\s+extends\\s+(\\w+))?(\\s+implements\\s+([\\w,\\s]+))?\\s*\\{.*$",
-                        Pattern.DOTALL | Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
-                .matcher("public class CodeSet\nextends AuditBase\nimplements Serializable\n{adas").matches());
-
-        System.out
-                .println(METHOD_REGEX_PATTERN
-                        .matcher(
-                                "\t@SuppressWarnings(\"rawtypes\")\n@SuppressWarnings(\"rawtypes\")\npublic Response serviceA(TestEntity testEntity, List<String> lit,\n Long[] lng) \n")
-                        .matches());
-
-        @SuppressWarnings("rawtypes")
-        Class cl = TestGeneratorMojo.class;
-
-        Map<String,PropertyDescriptor> mapofDesc = new HashMap<String,PropertyDescriptor>();
-        PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(cl).getPropertyDescriptors();
-        for (PropertyDescriptor field : propertyDescriptors)
-        {
-            if (field.getWriteMethod() != null)
-            {
-                mapofDesc.put(field.getName(), field);
-            }
-            System.out.println(field.getName());
-        }
-
-        List<Field> allPublicFields = Arrays.asList(cl.getFields());
-        for (Field field : allPublicFields)
-        {
-            System.out.println(field.getName() + " -> " + field.getType() + " -> " + field.getGenericType());
-        }
-        List<Field> allPrivateFields = Arrays.asList(cl.getDeclaredFields());
-        for (Field field : allPrivateFields)
-        {
-            if (mapofDesc.get(field.getName()) != null)
-            {
-                field.setAccessible(true);
-                System.out.println(field.getName() + " -> " + field.getType() + " -> " + field.getGenericType());
-                field.setAccessible(false);
-            }
-        }
-        /*
-         * for (Method method : cl.getMethods()) {
-         * 
-         * if(method.getName().equals("timepass")) { String methdec =
-         * "public void timepass(boolean t, List<String> lst, Collection<Integer> clst, @SuppressWarnings(\"rawtypes\") Map<List<Map<String, List>>, TestGeneratorMojo> mapo, @DefaultValue(\"4\") @QueryParam(\"size\")int size)"
-         * ; String tokbfr = methdec.substring(0, methdec.indexOf("(")); String tokafr =
-         * methdec.substring(methdec.indexOf("(")+1); if(tokbfr!=null && tokafr!=null) { String[] args =
-         * tokafr.split(","); args = testGenerator.neutralizeargs(args); String[] tokens = tokbfr.split(" ");
-         * if(tokens[tokens.length-1].equals(method.getName()) && method.getParameterTypes().length==args.length) {
-         * testGenerator.getLog().info(method.getName()); for (int i=0;i<args.length;i++) { String t = args[i];
-         * testGenerator.getLog().info(t+ " " + method.getGenericParameterTypes()[i].toString()); String[] argbrk =
-         * t.split("\\s+"); if((argbrk.length==2 && testGenerator.compareMethArgs(argbrk[0],
-         * method.getGenericParameterTypes()[i])) || (argbrk.length>2 &&
-         * testGenerator.compareMethArgs(argbrk[argbrk.length-2], method.getGenericParameterTypes()[i]))) {
-         * testGenerator.getLog().info("done"); } } } } } }
-         */
+    	if(args.length>0) {
+    		
+    		InputStream io = new FileInputStream(args[0]);
+    		XStream xstream = new XStream(new XppDriver());
+    		xstream.processAnnotations(new Class[]{TestgenConfiguration.class});
+    		xstream.alias("docTestPaths", String[].class);
+    		xstream.alias("docPaths", String[].class);
+    		xstream.alias("testPaths", String[].class);
+    		xstream.alias("links", String[].class);
+    		xstream.alias("docTestPath", String.class);
+    		xstream.alias("docPath", String.class);
+    		xstream.alias("testPath", String.class);
+    		xstream.alias("link", String.class);
+    		
+    		TestgenConfiguration config = (TestgenConfiguration)xstream.fromXML(io);
+    		
+    		TestGeneratorMojo testGenerator = new TestGeneratorMojo();
+    		testGenerator.setDebugEnabled(config.isDebugEnabled());
+    		testGenerator.setEnabled(config.isEnabled());
+    		testGenerator.setApiAuth(config.getApiAuth());
+    		testGenerator.setAuthExtract(config.getAuthextract());
+    		testGenerator.setCopywright(config.getCopywright());
+    		testGenerator.setDocPaths(config.getDocPaths());
+    		testGenerator.setDocTestPaths(config.getDocTestPaths());
+    		testGenerator.setLinks(config.getLinks());
+    		testGenerator.setLoginmeth(config.getLoginmeth());
+    		testGenerator.setLoginpass(config.getLoginpass());
+    		testGenerator.setLoginpath(config.getLoginpath());
+    		testGenerator.setLoginuser(config.getLoginuser());
+    		testGenerator.setRequestContentType(config.getRequestContentType());
+    		testGenerator.setResourcepath(config.getResourcepath());
+    		testGenerator.setSourceDir(config.getSourceDir());
+    		testGenerator.setTargetDir(config.getTargetDir());
+    		testGenerator.setTestPaths(config.getTestPaths());
+    		testGenerator.setUripath(config.getUripath());
+    		testGenerator.setUrlPrefix(config.getUrlPrefix());
+    		testGenerator.setUseBootstrapUI(config.isUseBootstrapUI());
+    		testGenerator.execute();
+    	}
     }
 
     /**
@@ -3749,6 +3738,9 @@ public class TestGeneratorMojo extends AbstractMojo
     @SuppressWarnings("rawtypes")
     public void execute()
     {
+    	if(!isEnabled())
+    		return;
+    	
         Thread currentThread = Thread.currentThread();
         ClassLoader oldClassLoader = currentThread.getContextClassLoader();
         try

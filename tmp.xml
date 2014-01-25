@@ -1,0 +1,64 @@
+<configuration>
+	<docTestPaths>
+		<docTestPath>com.my.restful.services.v1.</docTestPath>
+	</docTestPaths>
+	<docPaths>
+		<docPath>com.my.restful.dto.MyDTO</docPath>
+		<docPath>com.my.restful.mydtos.</docPath>
+	</docPaths>
+	<testPaths>
+		<testPath>com.my.restful.services.v2.</testPath>
+	</testPaths>
+	<!-- Add extra links to the testgen pages on the right hand side links section-->
+	<links>
+		<link>link1.html</link>
+		<link>link2.html</link>
+	</links>
+	<requestContentType>json</requestContentType>
+	<useBootstrapUI>true</useBootstrapUI>
+	<urlPrefix>urlprefix</urlPrefix>
+	<resourcepath>src/main/resources</resourcepath>
+	<uripath>testgen</uripath>
+	<copywright>Testgen 2012</copywright>
+	<loginpath>login</loginpath>
+	<loginmeth>POST</loginmeth>
+	<authextract>token,json</authextract>
+	<!-- XML xpath value
+		<authextract>//node//token,xml</authextract>
+	-->
+	<!-- 
+		<authextract>token,plain</authextract>
+	-->
+	<!-- 
+		<authextract>COOKIE-ID,cookie</authextract>
+	-->
+	<!-- 
+		<authextract>token,header</authextract>
+	-->
+	<apiauth>token,queryparam</apiauth>
+	<!-- 
+		<apiauth>token,postparam</apiauth>
+	-->
+	<!-- 
+		<apiauth>token,header</apiauth>
+	-->
+	<loginuser>username,header</loginuser>
+	<loginpass>password,header</loginpass>					
+	<!-- 
+		<loginuser>username,postparam</loginuser>
+		<loginpass>password,postparam</loginpass>
+	-->
+	<!-- 
+		<loginuser>username,queryparam</loginuser>
+		<loginpass>password,queryparam</loginpass>
+	-->
+	<!-- 
+		<loginuser>username,json</loginuser>
+		<loginpass>password,json</loginpass>
+	-->
+	<!-- 
+		<loginuser>username,authbasic</loginuser>
+		<loginpass>password,authbasic</loginpass>
+	-->
+	<enabled>true</enabled>
+</configuration>
