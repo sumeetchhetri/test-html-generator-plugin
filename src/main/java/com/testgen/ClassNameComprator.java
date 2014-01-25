@@ -8,7 +8,6 @@ import java.util.Comparator;
  */
 public class ClassNameComprator implements Comparator<String> {
 
-	@Override
 	public int compare(String clas1, String clas2) {
 		if(clas1!=null && clas1.indexOf(".")!=-1)
 			clas1 = clas1.substring(clas1.lastIndexOf(".")+1);

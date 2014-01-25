@@ -1,0 +1,683 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+	<head>
+		<TITLE>TestGen Home</TITLE>
+		<link rel="stylesheet" type="text/css" href="resources/style.css"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	</head>
+	<body id="body">
+		<div id="dyn-content">
+			<div id="container">
+				<div id="header">
+					<h1>
+						TestGen - HTML For your API's
+					</h1>
+				</div>
+				
+				<div id="navigation" style="display:inline-block;">
+					<ul class="dropdown">
+						<li><a href="index.html">Home</a></li>
+						$navigationLinks
+					</ul>
+				</div>
+				<div id="content-container">	
+					<div id="content">
+						<h2>
+							$testname
+						</h2>
+						<span class="header" style="vertical-align:top;margin-left:30px">Show Documentation
+							<input id="$formName+DocCheckbox" type="checkbox" checked=true style="margin-right:10px;" onchange="if(this.checked)document.getElementById('$formName+Doc').style.display='block';else document.getElementById('$formName+Doc').style.display='none';adjustHeight();"/>
+						</span>
+						<span class="header" style="vertical-align:top;">Show Test Page
+							<input id="$formName+TstCheckbox" type="checkbox" checked=true style="margin-right:10px;" onchange="if(this.checked)document.getElementById('$formName').style.display='block';else document.getElementById('$formName').style.display='none';adjustHeight();"/>
+						</span>
+						<p>&nbsp;</p>
+						<p>&nbsp;</p>
+						#if($genDoc==true)
+						<div class="stylized">
+							<h2 id="testgen-content-doc" onclick="#if($genTest==true)document.getElementById('$formName+TstCheckbox').checked=false;document.getElementById('$formName+DocCheckbox').checked=true;document.getElementById('$formName').style.display='none';document.getElementById('$formName+Doc').style.display='block';adjustHeight();#else return; #end"><u>Documentation</u></h2>
+						</div>
+						<div id="$formName+Doc" style="margin-left:50px;font-size:14px;">
+							$methodComments
+						</div>
+						#end
+
+						<br/><br/>						
+						
+						<div class="stylized" #if($genTest==false) style="display:none" #end>
+							<h2 id="testgen-content" onclick="#if($genTest==true)document.getElementById('$formName+DocCheckbox').checked=false;document.getElementById('$formName+TstCheckbox').checked=true;document.getElementById('$formName').style.display='block';document.getElementById('$formName+Doc').style.display='none';adjustHeight();#else return; #end"><u>Test Page</u></h2>
+							<br/>							
+							<form id="$formName" name="$formName" $enctype>
+							#if($genTest==true)
+							#if(!$schemaJson)
+								<h1 style="margin-left:50px;margin-right:50px;word-wrap:break-word;">$formDesc</h1>
+								#if ($formDetDesc)
+									<p>$formDetDesc</p>
+								#else
+									<p>&nbsp;</p>
+								#end
+								#if ($shwhidgrps)
+									<div style="margin-left:20px;margin-right:20px;"><b><u>Show/Hide Property Groups</u></b><br/><br/>$shwhidgrps</div>
+									<p>&nbsp;</p>
+									<center>*All blank input values will be set to null by default, If 'Blank Value' checkbox is checked value will be blank and not null<br/></center>
+									<p>&nbsp;</p>
+								#end
+								#if($request_content)
+								<div>
+									<label>Use Raw Text:&nbsp;</label>
+									<input type="checkbox" onchange="hideShowClasses('form-elems','form-request_content', this);updatetawidcont()"/><br/><br/>
+								</div>
+								#end
+								#foreach($vField in $vFields)
+									<div style="overflow:auto;#if($vField.getClaz());display:none#end" #if($vField.getClaz())class="#if(!$vField.getType().equals("url"))form-elems#end$vField.getName()"#end>
+										<label>#if($vField.getType().equals("url"))url&nbsp;#else $vField.getName()&nbsp;#end
+										#if ($vField.description)
+											<span class="small">$vField.getDescription()</span>
+										#end
+										</label>
+										#if ($vField.getType().equals("text"))
+											<input type="text" name="$vField.getLabel()" id="$vField.getName()" #if($vField.getVarType())$vField.getVarType()#end/>
+											<span style="font-size:10px;margin-left:10px">Blank</span><input type="checkbox" onchange="if(this.checked){document.getElementById('$vField.getName()').value='';document.getElementById('$vField.getName()').data='';} else {document.getElementById('$vField.getName()').value=null;document.getElementById('$vField.getName()').data=null;}" style="vertical-align:-2px;"/>
+											<br/><br/>
+										#elseif ($vField.getType().equals("text"))
+											<input type="text" class="clsDatePicker" readonly name="$vField.getLabel()" id="$vField.getName()" #if($vField.getVarType())$vField.getVarType()#end/>
+											<span style="font-size:10px;margin-left:10px">Blank</span><input type="checkbox" onchange="if(this.checked){document.getElementById('$vField.getName()').value='';document.getElementById('$vField.getName()').data='';} else {document.getElementById('$vField.getName()').value=null;document.getElementById('$vField.getName()').data=null;}" style="vertical-align:-2px;"/>
+											<br/><br/>
+										#elseif ($vField.getType().equals("header"))
+											<input type="text" class="headerparam" id="$vField.getLabel()" value="#if($vField.getValues().size()>0)$vField.getValues().get(0)#end" #if($vField.getVarType())$vField.getVarType()#end/><br/><br/>
+										#elseif ($vField.getType().equals("url"))
+											<input type="text" style="width: 50%; height: 30px;" id="$vField.getLabel()" value="#if($vField.getValues().size()>0)$vField.getValues().get(0)#end"/>
+											<button class="nmbutton" onclick="createCookie('$formName', $('#93be7b20299b11e281c10800200c9a66_URL').val(), 365);return false;">Save</button><button class="nmbutton" onclick="loadUrl();return false;">Load</button><br/><br/>
+										#elseif ($vField.getType().equals("textarea"))
+											<textarea style="margin-left:250px" name="$vField.getLabel()" id="$vField.getLabel()">#if($vField.getValues().size()>0) $vField.getValues().get(0) #end</textarea><br/><br/>
+										#elseif ($vField.getType().equals("map"))
+											<input type="text" id="$vField.getLabel()+mapkey"/>(key) <br/>
+											<label>&nbsp;</label><input type="text" id="$vField.getLabel()+mapvalue"/>(value)<button class="nmbutton" onclick="addMapKV('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#elseif ($vField.getType().equals("kcmap"))
+											<textarea id="$vField.getLabel()+mapvalue"></textarea>(key) <br/>
+											<label>&nbsp;</label><input type="text" id="$vField.getLabel()+mapkey"/>(value)<button class="nmbutton" onclick="addMapKV('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#elseif ($vField.getType().equals("vcmap"))
+											<input type="text" id="$vField.getLabel()+mapkey"/>(key) <br/>
+											<label>&nbsp;</label><textarea id="$vField.getLabel()+mapvalue"></textarea>(value)<button class="nmbutton" onclick="addMapKV('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#elseif ($vField.getType().equals("kvcmap"))
+											<textarea id="$vField.getLabel()+mapvalue"></textarea>(key) <br/>
+											<label>&nbsp;</label><textarea id="$vField.getLabel()+mapvalue"></textarea>(value)<button class="nmbutton" onclick="addMapKV('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#elseif ($vField.getType().equals("list"))
+											<input type="text" id="$vField.getLabel()+listv"/><button class="nmbutton" onclick="addListV('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#elseif ($vField.getType().equals("clist"))
+											<textarea id="$vField.getLabel()+listv"></textarea><button class="nmbutton" onclick="addListV('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#elseif ($vField.getType().equals("set"))
+											<input type="text" id="$vField.getLabel()+setv"/><button class="nmbutton" onclick="addSetV('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#elseif ($vField.getType().equals("cset"))
+											<textarea id="$vField.getLabel()+setv"></textarea><button class="nmbutton" onclick="addSetV('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#elseif ($vField.getType().equals("select"))
+											<select name="$vField.getLabel()" id="$vField.getLabel()">
+												#foreach( $value in $vField.getValues() )
+													<option value="$value">$value</option>
+												#end
+											</select><br/><br/>
+										#elseif ($vField.getType().equals("multipartform"))
+											<select id="$vField.getLabel()+sel">
+												<option value="text">text</option>
+												<option value="file">file</option>
+											</select>(type) <br/>
+											<label>&nbsp;</label><input type="text" id="$vField.getLabel()+name"/>(name)<button class="nmbutton" onclick="addFormParm('$vField.getLabel()');return false;">Add</button><br/><br/>
+										#end
+									</div>
+								#end
+								
+								<div class="spacer"></div>
+								#if(!$consumes.equals("multipart/form-data"))
+									<button type="submit" class="spbutton" type="submit" onclick="executeTest('#93be7b20299b11e281c10800200c9a66_URL','$httpMethod','$consumes','#$formName');return false;">Submit</button>
+									<br/><br/><p></p><br/>
+									<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/>
+									<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/>
+									<p></p>
+								#else
+									<input type="submit" class="spbutton" value="Submit">
+									<br/><br/><p></p><br/>
+									<label>Upload Progress&nbsp;</label><br/><br/><div class="progress" style="margin-left:200px"><div class="bar"></div><div class="percent">0%</div></div><br/>
+									<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/>
+									<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/>
+									<p></p>
+								#end
+							#end
+							#end						
+							</form>						
+							<script type="text/javascript" src="resources/prettify.js"></script>
+					        <script type='text/javascript' src="resources/jquery.min.js"></script>
+							<script type="text/javascript" src="resources/json2.js"></script>
+							<script type="text/javascript" src="resources/jquery.form.js"></script>
+							<script type="text/javascript" src="resources/testgen.js"></script>
+							<script type="text/javascript" src="resources/jquery.blockUI.js"></script>
+							<script type="text/javascript" src="resources/vkbeautify.js"></script>
+							<link href="resources/prettify.css" rel="stylesheet">
+							<link rel="stylesheet" type="text/css" href="resources/jquery.datetimepicker.css"/ >
+							<script type="text/javascript" src="resources/jquery.datetimepicker.js"></script>
+						    <script type="text/javascript" src="resources/jquery.autosize.min.js"></script>
+							<script type="text/javascript">	
+								
+								$jsfuncs
+								
+								#if($schemaJson)
+					        	var schema = JSON.parse('$schemaJson');
+					        	
+					        	function generate(schema, heirar, isnm, extra, addclas, labinpdet)
+								{
+									  if(schema.type=='string' || schema.type=='number' || schema.type=='integer' 
+									  		|| schema.type=='boolean' || schema.type=='date' || schema.type=='float'
+									  		|| schema.type=='double')
+									  {
+									  		var valut = generateRandom(schema.type);
+									  		var nmdef = (isnm?("name=\""+heirar+"\""):"");
+											var dtcls = "";
+											if(schema.type=='date')
+												dtcls = "clsDatePicker";
+											
+											return ("<div class=\"form-elems\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><input "+labinpdet+" "+nmdef+" "+extra+" class=\"form-control "+addclas+""+dtcls+"\" onblur=\"validate(this, '"+schema.type+"')\" value=\""+valut+"\" type='text'/><br/><br/></div>");
+									  }
+									  else if(schema.type=='object')
+									  {
+											if(schema.hasOwnProperty('properties'))
+											{
+												var html = "<div>";
+												for (var property in schema.properties) {
+													if (schema.properties.hasOwnProperty(property)) {
+														var hirNm = heirar;
+														if(!hirNm || hirNm=="")
+															hirNm = property;
+														else
+															hirNm += "['"+property+"']";
+														//var hirNm = (!heirar?"":heirar+"[") + property + "]";
+														var propobj = schema.properties[property];
+														//var margin = "style='margin-left:"+(step*5)+"px'";
+														var htmlp = generate(propobj, hirNm, isnm, "", addclas, "orig_val_cls=\""+hirNm+"\"");
+														html += htmlp;
+													}
+												}				
+												return html + "</div>";
+											}
+									  }
+									  else if(schema.type=='array')
+									  {
+											if(schema.hasOwnProperty('items'))
+											{
+												//var hirNm = (!heirar?"":heirar);
+												var hirNm = heirar;	
+												if(!hirNm || hirNm=="")
+													hirNm = "";
+												if(!countMap.hasOwnProperty(hirNm))
+													countMap[hirNm] = 0;
+												var ohirNm = hirNm;
+												schemaMap[hirNm] = schema.items;
+												
+												hirNm += "["+(countMap[hirNm]++)+"]";
+												//hirNm = (hirNm+"[" + (countMap[hirNm]++) +"]");
+												//var eleid = hirNm.replace('.','').replace('[','').replace(']','');
+												var html = '<div id="_element_'+ohirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+ohirNm+'<a href="#" style="text-decoration: none" onclick="addRemListElement(\''+ohirNm+'\',true)">&nbsp;&nbsp;<b>+</b></a><a href="#" style="text-decoration: none" onclick="addRemListElement(\''+ohirNm+'\',false)">&nbsp;&nbsp;<b>-</b></a><br/>';
+												html += generate(schema.items, hirNm, isnm, "", addclas, "orig_val_cls=\""+hirNm+"\"");
+												html += "</div>";				
+												return html;
+											}
+									  }
+									  else if(schema.type=='map')
+									  {
+											//var hirNm = (!heirar?"":heirar)
+											var hirNm = heirar;
+											if(!hirNm)
+												hirNm = "";
+											if(schema.hasOwnProperty('types'))
+											{
+												if(schema.types.hasOwnProperty('key') && schema.types.hasOwnProperty('value'))
+												{
+													var eleid = hirNm;//.replace('.','').replace('[','').replace(']','');
+													var html = '<div id="_element_'+eleid+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" onclick="addRemMapElement(\''+hirNm+'\', true)"><b>&nbsp;&nbsp;+</b></a><a href="#" style="text-decoration: none" onclick="addRemMapElement(\''+hirNm+'\', false)"><b>&nbsp;&nbsp;-</b></a><br/>';
+													var evnt = "onblur=\"updateMapValueNms('"+hirNm+"',this)\" map_value_cls=\""+hirNm+"\"";
+													html += generate(schema.types.key, hirNm, false, evnt, "map_key_cls", "");
+													var cls = hirNm + " " + addclas;
+													html += generate(schema.types.value, hirNm, true, "", cls, "orig_val_cls=\""+hirNm+"\"");
+													html += "</div>";
+													schemaMap[hirNm] = schema.types;
+													return html;
+												}
+											}
+									  }
+								}
+					
+								function updateMapValueNms(clsnm, key)
+								{
+									if(key.value.trim()=="")return;
+									if(!key.hasOwnProperty('lastclsnm'))
+										key.lastclsnm = "";
+									var nclsnm = clsnm;
+									if(nclsnm.lastIndexOf("[")!=-1)
+										nclsnm = nclsnm.substring(0, nclsnm.lastIndexOf("[")) + "['" + key.value + "']" + nclsnm.substring(nclsnm.lastIndexOf("["));
+									else
+										nclsnm += "['" + key.value + "']";
+									$('.'+clsnm).each(function() {
+										
+										this.className = this.className.replace(key.lastclsnm, "");
+										this.className += " " + nclsnm + " ";					
+										if(this.nodeName.toLowerCase()=="input")
+										{
+											var nnnm = this.getAttribute('orig_val_cls');
+											if(nnnm.indexOf("[")!=-1)
+												nnnm = nclsnm + nnnm.substring(nnnm.indexOf("["));
+											else
+												nnnm = nclsnm;
+											this.name = nnnm
+										}
+										else if(this.nodeName.toLowerCase()=="label")
+										{
+											var nnnm = this.getAttribute('orig_val_cls');
+											if(nnnm.indexOf("[")!=-1)
+												nnnm = nclsnm + nnnm.substring(nnnm.indexOf("["));
+											else
+												nnnm = nclsnm;
+											this.name = nnnm
+											this.innerHTML = nnnm
+										}
+									});
+									key.lastclsnm = " " +nclsnm+" ";
+								}
+					        	#end
+			
+								function updatetawidcont()
+								{
+									var cont = JSON.stringify($('#$formName').serializeObject(), undefined, "\t");
+									if(cont!="" && $('#req-txtarea').length>0)
+									{
+										$('#req-txtarea').val(cont).trigger('autosize.resize');
+									}
+								}
+								
+								var origHeight = 0;
+								function adjustHeight()
+								{
+									var height = document.getElementById('$formName+Doc').offsetHeight 
+													+ document.getElementById('$formName').parentNode.offsetHeight + 200;
+									if(screen.height > height)
+									{
+										if(origHeight > screen.height)
+											height = origHeight;
+										else
+											height = screen.height;
+									}
+									else if(origHeight > height)
+									{
+										height = origHeight;
+									}
+									document.getElementById('aside').style.height = height +'px';
+								}
+								
+								function correctHeight()
+								{
+									document.getElementById('$formName+Doc').style.display = 'none';
+									origHeight = document.getElementById('aside').offsetHeight;
+									if(screen.height > origHeight)
+									{
+										origHeight = screen.height;
+									}
+									document.getElementById('$formName+Doc').style.display = 'block';
+									var height = document.getElementById('$formName+Doc').offsetHeight 
+											+ document.getElementById('$formName').parentNode.offsetHeight + 200;
+									if(height > origHeight)
+									{
+										document.getElementById('aside').style.height = height +'px';
+									}
+									else 
+										document.getElementById('aside').style.height = origHeight +'px';
+								}
+								
+								function loadURL()
+								{
+									var urlValue = readCookie('$formName');
+									if(urlValue!=null)
+									{
+										$('#93be7b20299b11e281c10800200c9a66_URL').val(urlValue);
+									}
+								}
+								
+								$(document).ready(function() {
+									if($('.docImage').length>0)
+									{
+										$('.docImage').bind("load", function() {
+											correctHeight();
+										});
+									}
+									else
+									{
+										correctHeight();
+									}
+									
+									
+									
+								});
+								
+								(function() {
+									if(typeof authTokNm!="undefined" && typeof authTokTyp!="undefined")
+									{
+										var currUrl = document.location + "";
+										var currToken = "";
+										if(currUrl.indexOf("?")!=-1 && currUrl.indexOf(authTokNm+"=")!=-1)
+										{
+											currToken = currUrl.substr(currUrl.indexOf("?")+1);
+											currToken = currToken.substr(currToken.indexOf("=")+1);
+											if(debugEnabled)alert(authTokNm+"="+currToken);
+										}
+										$(document).ready(function() {
+											if(currToken!="")
+												handleAuth(currToken);
+											
+											#if($schemaJson)
+											$('#$formName').html(generate(schema, '', true, '', '', ''));
+											
+											$('#$formName').prepend(
+												'<div class="control-group"> \
+													<label>Use Raw Text:&nbsp;</label> \
+													<div class="controls"><input type="checkbox" onchange="hideShowClasses(\'form-elems\',\'form-request_content\', this);updatetawidcont()"/></div> \
+												</div> \
+												#foreach($vField in $vFields)
+												#if ($vField.getType().equals("url"))
+													<div class="control-group#if($vField.getClaz()) $vField.getName()#end"> \
+														<label>url&nbsp; \
+														</label> \
+														<div class="controls"> \
+														<input style="width:50%" class="form-control" type ="text" id="$vField.getLabel()" value="#if($vField.getValues().size()>0)$vField.getValues().get(0)#end"/><br/><br/> \
+														</div> \
+													</div> \
+												#end
+												#end
+												');	
+											
+											$('.map_key_cls').each(function() {
+												if(this.nodeName.toLowerCase()=="input")
+													updateMapValueNms(this.getAttribute('map_value_cls'), this);
+											});
+											if($('#req-txtarea').length==0)
+											{
+												$('#$formName').append('<div class="form-request_content"><label> Request Content&nbsp;</label>'
+														 + '<textarea class="form-control" style="width:60%" id="req-txtarea">#if($request_content)$request_content#end</textarea></div>');
+												$('#req-txtarea').autosize();
+												$('#req-txtarea').parent().hide();
+											}
+											else
+											{
+												$('#req-txtarea').parent().addClass('form-request_content');
+												$('#req-txtarea').val('#if($request_content)$request_content#end');
+												$('#req-txtarea').autosize();
+												$('#req-txtarea').parent().hide();
+											}
+											$('.clsDatePicker').datetimepicker({format: 'Y-m-d\\TH:i:s.000\\Z'});
+											$('#$formName').append(
+											'<div class="spacer"></div> \
+											#if(!$consumes.equals("multipart/form-data"))
+												<button type="submit" class="spbutton" type="submit" onclick="executeTest(\'#93be7b20299b11e281c10800200c9a66_URL\',\'$httpMethod\',\'$consumes\',\'#$formName\');return false;">Submit</button> \
+												<br/><br/><p></p><br/> \
+												<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/> \
+												<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/> \
+												<p></p> \
+											#else
+												<input type="submit" class="spbutton" value="Submit"> \
+												<br/><br/><p></p><br/> \
+												<label>Upload Progress&nbsp;</label><br/><br/><div class="progress" style="margin-left:200px"><div class="bar"></div><div class="percent">0%</div></div><br/> \
+												<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/> \
+												<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/> \
+												<p></p> \
+											#end
+											');
+											#else
+											$('.clsDatePicker').datetimepicker({format: 'Y-m-d\\TH:i:s.000\\Z'});
+											#end
+										});
+									}
+								})();
+								
+								function handleAuth(token)
+								{
+									if(debugEnabled)alert("Providing authentication access to Test Links....");
+									$('.asideLink').each(function() {
+										var lnkupd = "?" + authTokNm + "=";
+										if(typeof authTokNm!="undefined" && typeof authTokTyp!="undefined")
+										{	
+											if(this.href.indexOf(lnkupd)==-1)
+											{
+												this.href += lnkupd + token;
+											}
+											else
+											{
+												var tempbefore = this.href.substr(0, this.href.indexOf(lnkupd));
+												var tempafter = this.href.substr(this.href.indexOf(lnkupd));
+												if(tempafter.indexOf('&')!=-1)
+												{
+													tempafter = tempafter.substr(this.href.indexOf('&'));
+												}
+												else
+												{
+													tempafter = '';
+												}
+												this.href = tempbefore + lnkupd + token + tempafter;
+											}
+										}
+									});
+								}
+								
+								function togglehideShowClassGroup(clas,check)
+								{
+									$('#$formName div').each(function() {
+										
+										if(this.className!="" && (this.className==clas || this.className.indexOf(clas+"[")!=-1))
+										{
+											if(this.style.display=='none')
+												this.style.display = 'block';
+											else
+												this.style.display = 'none';
+										}
+									});
+									$('#$formName span').each(function() {
+										
+										if(this.className!="" && this.className.indexOf(clas+"[")!=-1)
+										{
+											if(check.checked)
+												this.style.display = 'block';
+											else
+												this.style.display = 'none';
+										}
+									});
+									adjustHeight();								
+								}
+			
+								function hideShowClasses(clas1, clas2, check)
+								{
+									$('.'+clas1).each(function() {
+										if(check.checked)
+											this.style.display = 'none';
+										else
+											this.style.display = 'block';
+									});
+									$('.'+clas2).each(function() {
+										if(check.checked)
+											this.style.display = 'block';
+										else
+											this.style.display = 'none';
+									});
+								}
+								
+								#if($genTest==true)					
+								#if($consumes.equals("multipart/form-data"))
+									(function() { 
+									var bar = $('.bar');
+									var percent = $('.percent');
+									var status = $('#status');
+									   
+									$('#$formName').ajaxForm({
+									    beforeSend: function() {
+									        if(debugEnabled)alert('Start Execute Test method call...');
+									        blockPage();
+											if(typeof authTokNm!="undefined" && typeof authTokTyp!="undefined")
+											{
+												var currUrl = document.location + "";
+												var currToken = "";
+												if(currUrl.indexOf("?")!=-1 && currUrl.indexOf(authTokNm+"=")!=-1)
+												{
+													currToken = currUrl.substr(currUrl.indexOf("?")+1);
+													currToken = currToken.substr(currToken.indexOf("=")+1);													
+												}
+												this.url = "../" + $('#93be7b20299b11e281c10800200c9a66_URL').val();
+												if(authTokTyp=="queryparam")
+												{
+													if(this.url.indexOf('?')==-1)
+													{
+														this.url += "?" + authTokNm + "=" + currToken;
+													}
+													else
+													{
+														if(this.url.charAt(this.url.length-1)=='&')
+															this.url += authTokNm + "=" + currToken;
+														else
+															this.url += "&" + authTokNm + "=" + currToken;
+													}
+													$('#$formName').attr('action', this.url);
+												}
+												else if(authTokTyp=="header")
+												{
+													this.headers[authTokNm] = currToken;
+												}
+												else if(authTokTyp=="postparam")
+												{
+													$('#$formName').append('<input type="hidden" name="'+authTokNm+'" value="'+currToken+'"/>');
+												}
+											}
+									        status.empty();
+									        var percentVal = '0%';
+									        bar.width(percentVal)
+									        percent.html(percentVal);
+									    },
+									    uploadProgress: function(event, position, total, percentComplete) {
+									        var percentVal = percentComplete + '%';
+									        bar.width(percentVal)
+									        percent.html(percentVal);
+									    },
+										complete: function(jqXhr) {
+										   unblockPage();
+										   var contentTypeHeader = jqXhr.getResponseHeader('Content-Type');
+										   if(contentTypeHeader==null)
+											  contentTypeHeader = jqXhr.getResponseHeader('Content-type');
+										   if(contentTypeHeader==null)
+											  contentTypeHeader = jqXhr.getResponseHeader('content-type');
+										   if(contentTypeHeader==null)
+										 	 contentTypeHeader = jqXhr.getResponseHeader('content-Type');
+										   if(debugEnabled)alert("Completed Execute Test method call "+jqXhr.status);
+										   if(contentTypeHeader.indexOf('application/json')!=-1)
+										   {
+										       eval('var ty = '+jqXhr.responseText+';');
+											   status.html(syntaxHighlight(JSON.stringify(ty, undefined, 4)));
+										   }
+										   else
+											  status.html(jqXhr.responseText);									       
+										}
+									});						
+								})();
+								#end
+							
+								function addMapKV(label)
+								{
+									var tem = document.getElementById(label+'_holder');
+									if(tem==null)
+										$('#$formName').append('<div id="'+label+'_holder"></div>');
+									var temid = label + '_holder';
+									var temkey = document.getElementById(label+'+mapkey').value;
+									var temval = document.getElementById(label+'+mapvalue').value;
+									var inptem = document.getElementById(label+'['+temkey+']');
+									if(inptem!=null)
+									{
+										alert('A map entry with the same key already exists!!');
+										return;
+									}
+									document.getElementById(temid).innerHTML += ('<input type="hidden" id="'+label+'['+temkey+']" name="'+label+'[\''+temkey+'\']" value="'+temval+'"/>');
+									document.getElementById(temid).innerHTML += ('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; '+label+' entry Key:'+temkey);
+									document.getElementById(temid).innerHTML += (', '+label+' entry Value:'+temval+'<br/>');
+								}
+								
+								
+								function addListV(label)
+								{
+									var vcounter = 0;
+									var tem = document.getElementById(label+'_holder');
+									if(tem==null)
+										$('#$formName').append('<div id="'+label+'_holder"></div>');
+									var temid = label + '_holder';
+									var temlval = document.getElementById(label+'_'+vcounter);
+									while(temlval!=null)
+									{
+										vcounter++;
+										temlval = document.getElementById(label+'_'+vcounter);
+									}
+									var temval = document.getElementById(label+'+listv').value;
+									document.getElementById(temid).innerHTML += ('<input type="hidden" id="'+label+'_'+vcounter+'" name="'+label+'['+vcounter+']" value="'+temval+'"/>');
+									vcounter++;
+									document.getElementById(temid).innerHTML += ('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; '+label+' entry value:'+temval+'<br/>');
+								}								
+								
+								function addSetV(label)
+								{
+									var scounter = 0;
+									var tem = document.getElementById(label+'_holder');
+									if(tem==null)
+										$('#$formName').append('<div id="'+label+'_holder"></div>');
+									var temid = label + '_holder';
+									var temlval = document.getElementById(label+'_'+vcounter);
+									while(temlval!=null)
+									{
+										scounter++;
+										temlval = document.getElementById(label+'_'+scounter);
+									}
+									var temval = document.getElementById(label+'+setv').value;
+									$('.'+label+'setclass').each(function() {
+										if(this.value==temval)
+										{
+											alert('A set entry with the same value already exists!!');
+											return;
+										} 
+									});
+									document.getElementById(temid).innerHTML += ('<input type="hidden" id="'+label+'_'+scounter+'" class="'+label+'setclass" name="'+label+'['+scounter+']" value="'+temval+'"/>');
+									scounter++;
+									document.getElementById(temid).innerHTML += ('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; '+label+' entry value:'+temval+'<br/>');
+								}
+								
+								function addFormParm(label)
+								{
+									var url = "../" + $('#93be7b20299b11e281c10800200c9a66_URL').val();	
+									$('#$formName').attr('action', url);
+									
+									var temkey = document.getElementById(label+'+name').value;
+									var temsel = document.getElementById(label+'+sel').value;
+									if(document.getElementById(label+temkey)!=null)
+									{
+										alert('A parameter with this name already exists!!');
+										return;
+									}
+									if(temsel=="text")
+										$('#$formName').append('<label>'+temkey+'&nbsp;</label><input type="text" id="'+label+temkey+'" name="'+temkey+'"/><br/><br/>');
+									else
+									{	
+										$('#$formName').append('<label>'+temkey+'&nbsp;</label><input type="file" id="'+label+temkey+'" name="'+temkey+'"/><br/><br/>');													
+									}
+								}							
+								#end
+							</script>
+						</div>						
+					</div>	
+					
+					<div id="aside">
+						$asideLinkValues
+					</div>
+				</div>
+				
+				<div id="footer">
+					© $copywright, All rights reserved.
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

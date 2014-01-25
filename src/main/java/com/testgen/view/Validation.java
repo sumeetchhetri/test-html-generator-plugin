@@ -32,4 +32,10 @@ public class Validation {
 		return "Validation [type=" + type + ", value=" + value + "]";
 	}
 	
+	public Validation(){}
+	
+	public Validation(String type)
+	{
+		this.type = type;
+	}
 }

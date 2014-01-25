@@ -1,0 +1,30 @@
+<div class="btn-group">
+	  <a href="$href" style="margin-left:10px;" class="navbar-btn btn btn-default btn-plus dropdown-toggle" #if($links && !$links.isEmpty())data-toggle="dropdown"#end>
+		   $alphabet
+	  </a>
+	  #if($links && !$links.isEmpty())
+	  <ul class="nav dropdown-menu">
+	  	  #foreach($link in $links)
+	  	  #if($link.getHref())
+		  <li class="nav dropdown-submenu"><a href="$link.getHref()"> $link.getName()</a>
+		  #else
+		  <li class="nav dropdown-submenu"><a href="#"> $link.getName()</a>
+		  #end
+		    #if($sublinks && $sublinks.containsKey($link.getName()))
+		    <ul class="dropdown-menu">
+	  	  	  #foreach($slink in $sublinks.get($link.getName()))
+              <li><a href="$slink.getHref()" class="asideLink"> $slink.getName()</a></li>
+              #end
+			</ul>
+			#end
+		  </li>
+		  #end
+	  </ul>
+	  <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse2">
+		  <span class="sr-only">Toggle navigation</span>
+		  <span class="icon-bar"></span>
+		  <span class="icon-bar"></span>
+		  <span class="icon-bar"></span>
+	  </button>
+	  #end
+  </div>   

@@ -13,8 +13,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
@@ -22,6 +24,7 @@ import java.net.URLClassLoader;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -32,31 +35,35 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 
 import net.coobird.thumbnailator.Thumbnails;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.InstantiationStrategy;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -64,15 +71,16 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.settings.MavenSettingsBuilder;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import org.codehaus.jackson.map.DeserializationConfig;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.testgen.view.Validation;
 import com.testgen.view.ViewField;
 
 /**
@@ -103,6 +111,8 @@ import com.testgen.view.ViewField;
  * 			<link>link1.html</link>
  * 			<link>link2.html</link>
  * 		</links>
+ * 		<requestContentType>json</requestContentType>
+ * 		<useBootstrapUI>true</useBootstrapUI>
  *      <urlPrefix>urlprefix</urlPrefix>
  * 		<resourcepath>src/main/resources</resourcepath>
  * 		<uripath>testgen</uripath>
@@ -110,6 +120,9 @@ import com.testgen.view.ViewField;
  * 		<login-path>login</login-path>
  * 		<login-meth>POST</login-meth>
  * 		<auth-extract>token,json</auth-extract>
+ * 		<!-- XML xpath value
+ * 			<auth-extract>//node//token,xml</auth-extract>
+ * 		-->
  * 		<!-- 
  * 			<auth-extract>token,plain</auth-extract>
  * 		-->
@@ -511,7 +524,96 @@ public class TestGeneratorMojo extends AbstractMojo
     {
         this.debugEnabled = debugEnabled;
     }
+    
+    @Parameter(alias = "useBootstrapUI")
+    private boolean useBootstrapUI;
+    
+    public boolean isUseBootstrapUI() {
+		return useBootstrapUI;
+	}
 
+	public void setUseBootstrapUI(boolean useBootstrapUI) {
+		this.useBootstrapUI = useBootstrapUI;
+	}
+	
+	@Parameter(alias = "requestContentType")
+	private String requestContentType;
+
+	public String getRequestContentType() {
+		return requestContentType;
+	}
+
+	public void setRequestContentType(String requestContentType) {
+		this.requestContentType = requestContentType;
+	}
+
+	public static class LinkObject {
+    	private String name;
+    	private String href;
+    	private String method;
+    	private int counter;
+    	public LinkObject(String name, String href, String method) {
+			super();
+			this.name = name;
+			this.href = href;
+			this.method = method;
+		}
+		public LinkObject(String name, String href, int counter) {
+			super();
+			this.name = name;
+			this.href = href;
+			this.counter = counter;
+		}
+		public LinkObject(String name, String href) {
+			super();
+			this.name = name;
+			this.href = href;
+		}
+		public String getName() {
+			return name;
+		}
+		public void setName(String name) {
+			this.name = name;
+		}
+		public String getHref() {
+			return href;
+		}
+		public void setHref(String href) {
+			this.href = href;
+		}
+		public String getMethod() {
+			return method;
+		}
+		public void setMethod(String method) {
+			this.method = method;
+		}
+		public int getCounter() {
+			return counter;
+		}
+		public void setCounter(int counter) {
+			this.counter = counter;
+		}
+    }
+
+	
+	private Annotation[] getRestArgAnnotation(Annotation[] annotations) {
+    	
+    	Annotation[] annot = new Annotation[2];
+    	if(annotations!=null && annotations.length>0) 
+    	{
+	    	for (Annotation annotation : annotations) 
+	    	{
+				if(annotation instanceof FormParam || annotation instanceof QueryParam
+		                || annotation instanceof RequestParam || annotation instanceof HeaderParam
+		                || annotation instanceof PathParam)
+					annot[0] = annotation;
+				if(annotation instanceof DefaultValue)
+					annot[1] = annotation;
+			}
+    	}
+		return annot;
+	}
+	
     /**
      * @param classes Generates all the related documentation/test form HTML for all the packages/classes mentioned, if
      *            the given class is not a rest ful web service then only documentation for the corresponding class will
@@ -557,11 +659,27 @@ public class TestGeneratorMojo extends AbstractMojo
                 unzipZipFile(resourcesIS, dir.getAbsolutePath());
             }
             resourcesIS.close();
+            resourcesIS = TestGeneratorMojo.class.getResourceAsStream("/fonts.zip");
+            if (resourcesIS != null)
+            {
+                unzipZipFile(resourcesIS, dir.getAbsolutePath());
+            }
+            resourcesIS.close();
+            File originalIndex = new File(dir.getAbsolutePath() + "/index.html");
+            if(originalIndex.exists()) {
+            	originalIndex.delete();
+            }
             File index = new File(dir.getAbsolutePath() + "/resources/index.html");
-            if (index != null)
+            
+            int accordianCounter = 1;
+            if (index != null && !isUseBootstrapUI())
             {
                 str.append("<h3><a class=\"asideLink\" href=\"index.html\"><span class=\"service\">Home</span></a></h3>");
                 index.renameTo(new File(dir.getAbsolutePath() + "/index.html"));
+            }
+            else
+            {
+            	str.append(getAccordianHeadingHTML(new LinkObject("Home", "index.html", accordianCounter++), null));
             }
 
             ViewField urlViewField = null;
@@ -701,7 +819,11 @@ public class TestGeneratorMojo extends AbstractMojo
                             context.put("formDesc", "<b class=\"" + context.get("httpMethod").toString().toLowerCase()
                                     + "big\">POST</b>&nbsp;-&nbsp;" + getLoginpath());
                             context.put("vFields", parameters);
-                            engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
+                            
+                            if(!isUseBootstrapUI())
+                            	engine.mergeTemplate("/templates/formtemplate_static.vm", context, writer);
+                            else
+                            	engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
 
                             BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(dir.getAbsolutePath()
                                     + "/TestLogin.html")));
@@ -712,7 +834,10 @@ public class TestGeneratorMojo extends AbstractMojo
 
                             if (isDebugEnabled())
                                 getLog().debug("login");
-                            str.append("<h3><a class=\"asideLink\" href=\"TestLogin.html\"><span class=\"service\">TestLogin</span></a></h3>");
+                            if(!isUseBootstrapUI())
+                            	str.append("<h3><a class=\"asideLink\" href=\"TestLogin.html\"><span class=\"service\">TestLogin</span></a></h3>");
+                            else
+                            	str.append(getAccordianHeadingHTML(new LinkObject("TestLogin", "TestLogin.html", accordianCounter++), null));
                         }
                         catch (Exception e1)
                         {
@@ -724,7 +849,9 @@ public class TestGeneratorMojo extends AbstractMojo
             }
 
             Map<String,String> mapOfClassComments = new HashMap<String,String>();
-            Map<String,String> mapOfAsideLinkInfos = new HashMap<String,String>();
+            Map<String,String> mapOfAsideLinkInfosStr = new HashMap<String,String>();
+            Map<String,LinkObject> mapOfAsideLinkInfos = new HashMap<String,LinkObject>();
+            Map<String,List<LinkObject>> mapOfAsideLinkInfoslnks = new HashMap<String,List<LinkObject>>();
             Map<String,Integer> classTypes = new HashMap<String,Integer>();
             for (ClassDocTestGen classDocTestGen : classes)
             {
@@ -737,6 +864,8 @@ public class TestGeneratorMojo extends AbstractMojo
                 if (theClassPath == null)
                     theClassPath = claz.getAnnotation(RequestMapping.class);
 
+                LinkObject classhtml = null;
+                List<LinkObject> classlinks = new ArrayList<LinkObject>();
                 // Will create only documentation if this is not a rest ful web service
                 if (!type.equals("doc") && theClassPath != null)
                 {
@@ -748,9 +877,14 @@ public class TestGeneratorMojo extends AbstractMojo
                             generateDoc(claz, srcDir, mapOfComments, mapOfClassComments);
                         }
 
+                        String classhtmlstr = null;
                         if (isDebugEnabled())
                             getLog().debug("Generating for class - " + claz.getSimpleName());
-                        String classhtml = "<h3><span class=\"service\">" + claz.getSimpleName() + "</span><br/>";
+                        if(!isUseBootstrapUI())
+                        	classhtmlstr = "<h3><span class=\"service\">" + claz.getSimpleName() + "</span><br/>";
+                        else
+                        	classhtml = new LinkObject(claz.getSimpleName(), null, accordianCounter++);
+                        
                         Method[] methods = claz.getMethods();
                         boolean closehdr = false;
                         for (Method method : methods)
@@ -806,45 +940,51 @@ public class TestGeneratorMojo extends AbstractMojo
                                 urlViewField = viewField;
 
                                 String completeServiceSubmitPath = url;
-                                Class<?>[] argTypes = method.getParameterTypes();
+                                Type[] argTypes = method.getGenericParameterTypes();
                                 Annotation[][] argAnot = method.getParameterAnnotations();
-
+                                ViewField contentvf = null;
                                 for (int i = 0; i < argTypes.length; i++)
                                 {
-                                    if (argAnot[i] == null
-                                            || argAnot[i].length == 0
-                                            || (argAnot[i].length > 0 && (argAnot[i][0] instanceof FormParam
-                                                    || argAnot[i][0] instanceof QueryParam
-                                                    || argAnot[i][0] instanceof RequestParam || argAnot[i][0] instanceof HeaderParam)))
+                                	Annotation[] annotations = getRestArgAnnotation(argAnot[i]);
+                                	String formpnm = null;
+                                    boolean isheaderParam = false;
+                                    String defValue = null;
+                                    if (annotations[0]!=null)
                                     {
-                                        String formpnm = null;
-                                        boolean isheaderParam = false;
+                                        if (annotations[0] instanceof FormParam)
+                                            formpnm = ((FormParam) annotations[0]).value();
 
-                                        if (argAnot[i].length > 0 && argAnot[i][0] instanceof FormParam)
-                                            formpnm = ((FormParam) argAnot[i][0]).value();
+                                        if (annotations[0] instanceof RequestParam)
+                                            formpnm = ((RequestParam) annotations[0]).value();
 
-                                        if (argAnot[i].length > 0 && argAnot[i][0] instanceof RequestParam)
-                                            formpnm = ((RequestParam) argAnot[i][0]).value();
-
-                                        if (argAnot[i].length > 0 && argAnot[i][0] instanceof QueryParam)
+                                        if (annotations[0] instanceof QueryParam)
                                         {
                                             if (completeServiceSubmitPath.indexOf("?") == -1)
                                                 completeServiceSubmitPath += "?";
-                                            completeServiceSubmitPath += ((QueryParam) argAnot[i][0]).value() + "={"
-                                                    + ((QueryParam) argAnot[i][0]).value() + "}&";
+                                            completeServiceSubmitPath += ((QueryParam) annotations[0]).value() + "={"
+                                                    + ((QueryParam) annotations[0]).value() + "}&";
                                             urlViewField.getValues().remove(0);
                                             urlViewField.getValues().add(completeServiceSubmitPath);
                                             continue;
                                         }
 
-                                        if (argAnot[i].length > 0 && argAnot[i][0] instanceof HeaderParam)
+                                        if (annotations[0] instanceof HeaderParam)
                                         {
-                                            formpnm = ((HeaderParam) argAnot[i][0]).value();
+                                            formpnm = ((HeaderParam) annotations[0]).value();
                                             isheaderParam = true;
                                         }
-
-                                        updateViewFields(argTypes[i], parameters, null, formpnm, isheaderParam, null);
+                                        
+                                        if (annotations[0] instanceof PathParam)
+                                        {
+                                        	continue;
+                                        }
+                                        
                                     }
+                                    if(annotations[1]!=null)
+                                    	defValue =  ((DefaultValue)annotations[1]).value();
+                                    List<Type> heirarchies = new ArrayList<Type>();
+                                    updateViewFields(argTypes[i], parameters, null, formpnm, isheaderParam, null, heirarchies, defValue);
+                                    contentvf = getViewField(argTypes[i]);
                                 }
 
                                 VelocityContext context = new VelocityContext();
@@ -864,7 +1004,7 @@ public class TestGeneratorMojo extends AbstractMojo
                                     context.put("genDoc", false);
                                     context.put("genTest", true);
                                 }
-
+                                
                                 classTypes.put(claz.getSimpleName(), classTypes.get(claz.getSimpleName()) + 1);
 
                                 Annotation hm = method.getAnnotation(POST.class);
@@ -905,7 +1045,6 @@ public class TestGeneratorMojo extends AbstractMojo
                                     consumes = ((Consumes) annot).value()[0];
                                 }
 
-                                context.put("consumes", consumes);
                                 if (consumes.equals(MediaType.MULTIPART_FORM_DATA))
                                 {
                                     context.put("enctype", "action=" + completeServiceSubmitPath + "\" enctype=\""
@@ -922,6 +1061,50 @@ public class TestGeneratorMojo extends AbstractMojo
                                     context.put("enctype", "");
                                 }
 
+                                if((httpMethod.equals("POST") || httpMethod.equals("PUT")) 
+                                		&& getRequestContentType()!=null && !"".equals(getRequestContentType().trim()))
+                                {
+                                	if("json".equalsIgnoreCase(getRequestContentType().trim()))
+                                	{
+                                		consumes = MediaType.APPLICATION_JSON;
+                                	}
+                                	else if("xml".equalsIgnoreCase(getRequestContentType().trim()))
+                                	{
+                                		consumes = MediaType.APPLICATION_XML;
+                                    }
+                                }
+                                
+                                if(contentvf!=null && contentvf.getValue()!=null && !isPrimitive(contentvf.getValue().getClass()))
+                                {
+	                                if(consumes.equals(MediaType.APPLICATION_JSON))
+	                                {
+	                                	ObjectMapper jsonMapper = new ObjectMapper();
+	                                	String content = new ObjectMapper().writeValueAsString(contentvf.getValue());	
+	                                	//content = content.replaceAll("'", "\'");
+	                                	context.put("request_content", content);
+	                                	
+	                                	jsonMapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	                                	jsonMapper.configure(DeserializationConfig.Feature.AUTO_DETECT_FIELDS, true);
+	                                	String schemaJson = jsonMapper.generateJsonSchema(contentvf.getValue().getClass()).toString();
+	                                	schemaJson = schemaJson.replaceAll("'", "\'");
+	                                	context.put("schemaJson", schemaJson);
+	                                	
+	                                }
+	                                else if(consumes.equals(MediaType.APPLICATION_XML))
+	                                {
+	                                	JAXBContext jcontext = JAXBContext.newInstance(contentvf.getClaz());
+		                                Marshaller m = jcontext.createMarshaller();
+		                                m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		                                StringWriter writer = new StringWriter();
+		                                m.marshal(contentvf.getValue(), writer);
+		                                String content = writer.toString();
+		                                //content = content.replaceAll("'", "\'");
+		                                context.put("request_content", content);
+	                                }
+                                }
+
+                                context.put("consumes", consumes);
+                                
                                 if (lauthExtractTokens != null)
                                 {
                                     String jsfuncs = "var loginExtractionNm = \"" + lauthExtractTokens[0] + "\";\n";
@@ -1055,7 +1238,10 @@ public class TestGeneratorMojo extends AbstractMojo
                                 StringWriter writer = new StringWriter();
                                 try
                                 {
-                                    engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
+                                	if(!isUseBootstrapUI())
+                                    	engine.mergeTemplate("/templates/formtemplate_static.vm", context, writer);
+                                    else
+                                    	engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
 
                                     String fileName = getTargetDir() + "/" + getUripath() + "/" + claz.getName() + "_"
                                             + method.getName() + ".html";
@@ -1067,16 +1253,21 @@ public class TestGeneratorMojo extends AbstractMojo
 
                                     if (isDebugEnabled())
                                         getLog().debug(method.getName());
-                                    if (classhtml != null)
+                                    if(!isUseBootstrapUI())
                                     {
-                                        strc.append(classhtml);
-                                        classhtml = null;
-                                        closehdr = true;
+	                                    if (classhtmlstr != null)
+	                                    {
+	                                        strc.append(classhtmlstr);
+	                                        classhtmlstr = null;
+	                                        closehdr = true;
+	                                    }
+	                                    strc.append("<span class=\"method\"><b class=\"" + httpMethod.toLowerCase() + "\">"
+	                                            + httpMethod + "</b></span><a class=\"asideLink\" href=\"" + claz.getName()
+	                                            + "_" + method.getName() + ".html" + "\"><span class=\"sub-service\">"
+	                                            + method.getName() + "</span></a><br/>");	                                            
                                     }
-                                    strc.append("<span class=\"method\"><b class=\"" + httpMethod.toLowerCase() + "\">"
-                                            + httpMethod + "</b></span><a class=\"asideLink\" href=\"" + claz.getName()
-                                            + "_" + method.getName() + ".html" + "\"><span class=\"sub-service\">"
-                                            + method.getName() + "</span></a><br/>");
+                                    else
+                                    	classlinks.add(new LinkObject(method.getName(), claz.getName() + "_" + method.getName() + ".html", httpMethod.toLowerCase()));
                                 }
                                 catch (Exception e1)
                                 {
@@ -1260,7 +1451,10 @@ public class TestGeneratorMojo extends AbstractMojo
                     StringWriter writer = new StringWriter();
                     try
                     {
-                        engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
+                    	if(!isUseBootstrapUI())
+                        	engine.mergeTemplate("/templates/formtemplate_static.vm", context, writer);
+                        else
+                        	engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
 
                         String fileName = getTargetDir() + "/" + getUripath() + "/" + claz.getName() + ".html";
                         BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(fileName)));
@@ -1268,9 +1462,14 @@ public class TestGeneratorMojo extends AbstractMojo
                         fwriter.close();
 
                         lst.add(claz.getName() + ".html");
-                        String classhtml = "<h3><span class=\"service\"><a class=\"asideLink\" href=\""
-                                + claz.getName() + ".html" + "\">" + claz.getSimpleName() + "</a></span><br/>";
-                        strc.append(classhtml);
+                        if(!isUseBootstrapUI())
+                        {
+                        	String classhtmlstr = "<h3><span class=\"service\"><a class=\"asideLink\" href=\""
+                        					+ claz.getName() + ".html" + "\">" + claz.getSimpleName() + "</a></span><br/>";
+                            strc.append(classhtmlstr);
+                        }
+                        else
+                        	 classhtml = new LinkObject(claz.getSimpleName(), claz.getName() + ".html", accordianCounter++);
                     }
                     catch (Exception e1)
                     {
@@ -1278,17 +1477,30 @@ public class TestGeneratorMojo extends AbstractMojo
                     }
                 }
 
-                mapOfAsideLinkInfos.put(claz.getName(), strc.toString());
+                if(!isUseBootstrapUI())
+                	mapOfAsideLinkInfosStr.put(claz.getName(), strc.toString());
+                else
+                {
+	                mapOfAsideLinkInfos.put(claz.getName(), classhtml);
+	                mapOfAsideLinkInfoslnks.put(claz.getName(), classlinks);
+                }
             }
 
             StringBuilder nav = new StringBuilder();
             if (isLoginPresent)
             {
-                nav.append("<li><a href=\"TestLogin.html\">Login</a></li>");
+            	if(!isUseBootstrapUI())
+            		nav.append("<li><a href=\"TestLogin.html\">Login</a></li>");
+            	else
+            		nav.append(getAlphabetDropDownHTML("Login", "TestLogin.html", null, null));
             }
+            
             char current = 'A';
             while (current <= 'Z')
             {
+            	Map<String,List<LinkObject>> mapOfDropDownSublinks = new HashMap<String,List<LinkObject>>();
+                List<LinkObject> ddlinks = new ArrayList<LinkObject>();
+                
                 int counter = 0;
                 int subcounter = 0;
                 for (String fileName : lst)
@@ -1303,7 +1515,8 @@ public class TestGeneratorMojo extends AbstractMojo
                     {
                         if (counter++ == 0)
                         {
-                            nav.append("<li><a href=\"#\">" + current + "</a><ul>");
+                        	if(!isUseBootstrapUI())
+                        		nav.append("<li><a href=\"#\">" + current + "</a><ul>");
                         }
                         if (fileName.indexOf("_") != -1)
                         {
@@ -1312,43 +1525,62 @@ public class TestGeneratorMojo extends AbstractMojo
                             {
                                 if (subcounter++ == 0)
                                 {
-                                    nav.append("<li><a href=\"#\">" + fileName.substring(0, fileName.lastIndexOf("_"))
-                                            + "</a><ul>");
+                                	if(!isUseBootstrapUI())
+                                		nav.append("<li><a href=\"#\">" + fileName.substring(0, fileName.lastIndexOf("_")) + "</a><ul>");
                                     String temp = fileName.substring(fileName.lastIndexOf("_") + 1);
                                     temp = temp.substring(0, temp.indexOf("."));
-                                    nav.append("<li><a class=\"asideLink\" href=\"" + origFile + "\">" + temp
-                                            + "</a></li>");
+                                    if(!isUseBootstrapUI())
+                                    	nav.append("<li><a class=\"asideLink\" href=\"" + origFile + "\">" + temp + "</a></li>");
+                                    
+                                    if(isUseBootstrapUI())
+                                    {
+	                                    ddlinks.add(new LinkObject(fileName.substring(0, fileName.lastIndexOf("_")), null));
+	                                    mapOfDropDownSublinks.put(fileName.substring(0, fileName.lastIndexOf("_")), new ArrayList<LinkObject>());
+	                                    mapOfDropDownSublinks.get(fileName.substring(0, fileName.lastIndexOf("_")))
+	                                    	.add(new LinkObject(temp, origFile));
+                                    }
                                 }
                                 else
                                 {
                                     String temp = fileName.substring(fileName.lastIndexOf("_") + 1);
                                     temp = temp.substring(0, temp.indexOf("."));
-                                    nav.append("<li><a class=\"asideLink\" href=\"" + origFile + "\">" + temp
-                                            + "</a></li>");
+                                    if(!isUseBootstrapUI())
+                                    	nav.append("<li><a class=\"asideLink\" href=\"" + origFile + "\">" + temp + "</a></li>");
+                                    else
+                                    	mapOfDropDownSublinks.get(fileName.substring(0, fileName.lastIndexOf("_")))
+                                			.add(new LinkObject(temp, origFile));
                                 }
                                 if (classTypes.get(fileName.substring(0, fileName.lastIndexOf("_"))) != null
                                         && classTypes.get(fileName.substring(0, fileName.lastIndexOf("_"))) == subcounter)
                                 {
-                                    nav.append("</ul></li>");
+                                	if(!isUseBootstrapUI())
+                                		nav.append("</ul></li>");
                                     subcounter = 0;
                                 }
                             }
                             else
                             {
-                                nav.append("<li><a class=\"asideLink\" href=\"" + origFile + "\">"
-                                        + fileName.substring(0, fileName.indexOf(".")) + "</a></li>");
+                            	if(!isUseBootstrapUI())
+                            		nav.append("<li><a class=\"asideLink\" href=\"" + origFile + "\">" + fileName.substring(0, fileName.indexOf(".")) + "</a></li>");
+                            	else
+                            		ddlinks.add(new LinkObject(fileName.substring(0, fileName.indexOf(".")), origFile));
                             }
                         }
                         else
                         {
-                            nav.append("<li><a class=\"asideLink\" href=\"" + origFile + "\">"
-                                    + fileName.substring(0, fileName.indexOf(".")) + "</a></li>");
+                        	if(!isUseBootstrapUI())
+                        		nav.append("<li><a class=\"asideLink\" href=\"" + origFile + "\">" + fileName.substring(0, fileName.indexOf(".")) + "</a></li>");
+                        	else
+                        		ddlinks.add(new LinkObject(fileName.substring(0, fileName.indexOf(".")), origFile));
                         }
                     }
                 }
                 if (counter > 0)
                 {
-                    nav.append("</ul></li>");
+                	if(!isUseBootstrapUI())
+                		nav.append("</ul></li>");
+                	else
+                		nav.append(getAlphabetDropDownHTML(current+"", null, ddlinks, mapOfDropDownSublinks));
                 }
                 current++;
                 counter = 0;
@@ -1362,68 +1594,113 @@ public class TestGeneratorMojo extends AbstractMojo
             }
             alst.addAll(lst);
 
-            Set<String> classNames = mapOfAsideLinkInfos.keySet();
+            Set<String> classNames = null;
+            if(!isUseBootstrapUI())
+            	classNames = mapOfAsideLinkInfosStr.keySet();
+            else
+            	classNames = mapOfAsideLinkInfos.keySet();
             List<String> classNamesLst = new ArrayList<String>(classNames);
             Collections.sort(classNamesLst, new ClassNameComprator());
-            for (String asideLink : classNamesLst)
+            for (String clazNm : classNamesLst)
             {
-                str.append(mapOfAsideLinkInfos.get(asideLink));
+            	if(!isUseBootstrapUI())
+            		str.append(mapOfAsideLinkInfosStr.get(clazNm));
+            	else
+            		str.append(getAccordianHeadingHTML(mapOfAsideLinkInfos.get(clazNm), mapOfAsideLinkInfoslnks.get(clazNm)));
             }
 
-            if (links != null)
+            if (links != null && links.length>0)
             {
+            	List<LinkObject> lnks = new ArrayList<LinkObject>();
                 for (String link : links)
                 {
                     String temp = link;
                     if (link.indexOf("/") != -1)
                         link = link.substring(link.lastIndexOf("/") + 1);
-                    String linkhtml = "<h3><span class=\"service\"><a class=\"asideLink\" href=\"" + temp + "\">"
+                    
+                    if(!isUseBootstrapUI())
+                    {
+                    	String linkhtml = "<h3><span class=\"service\"><a class=\"asideLink\" href=\"" + temp + "\">"
                             + link + "</a></span><br/>";
-                    str.append(linkhtml);
+                    	str.append(linkhtml);
+                    }
+                    else
+                    	lnks.add(new LinkObject(link, temp));
                 }
+                if(isUseBootstrapUI())
+                	str.append(getAccordianHeadingHTML(new LinkObject("Other Links", null, accordianCounter++), lnks));
             }
 
             for (String fileName : alst)
             {
                 getLog().info(fileName);
-                VelocityEngine engine = new VelocityEngine();
-                engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "file");
-                engine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, dir.getAbsolutePath());
-                engine.init();
+                
                 StringWriter writer = new StringWriter();
-                try
-                {
-                    VelocityContext context = new VelocityContext();
+                
+                VelocityContext context = new VelocityContext();
+                context.put("title", "Home");
+                context.put("testname", "");
+                context.put("testSubmitPath", "");
+                context.put("testPath", "");
+                context.put("formName", "");
 
-                    if (fileName.equals("index.html"))
+                context.put("genDoc", true);
+                context.put("genTest", false);
+                context.put("httpMethod", "");
+                if (fileName.equals("index.html"))
+                {
+                    StringBuilder build = new StringBuilder();
+                    for (Map.Entry<String,String> entry : mapOfClassComments.entrySet())
                     {
-                        StringBuilder build = new StringBuilder();
-                        for (Map.Entry<String,String> entry : mapOfClassComments.entrySet())
-                        {
-                            build.append("<br/><b>&#8226;&nbsp;</b><a href=\"#\" onclick=\"toggle_visibility('"
-                                    + entry.getKey() + "_comment')\" " + "style=\"font-size:15px\">" + entry.getKey()
-                                    + "</a>" + "<div id=\"" + entry.getKey()
-                                    + "_comment\" class=\"doc-content-class\"><br/>" + entry.getValue() + "<br/></div>");
-                        }
-                        context.put("classComments", build.toString());
+                        build.append("<br/><b>&#8226;&nbsp;</b><a href=\"#\" onclick=\"toggle_visibility('"
+                                + entry.getKey() + "_comment')\" " + "style=\"font-size:15px\">" + entry.getKey()
+                                + "</a>" + "<div id=\"" + entry.getKey()
+                                + "_comment\" class=\"doc-content-class\"><br/>" + entry.getValue() + "<br/></div>");
                     }
-
-                    context.put("asideLinkValues", str.toString());
-
-                    context.put("copywright", getCopywright());
-                    context.put("navigationLinks", nav.toString());
-                    engine.mergeTemplate(fileName, context, writer);
-
-                    BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(dir.getAbsolutePath() + "/"
-                            + fileName)));
-                    fwriter.write(writer.toString());
-                    fwriter.close();
+                    context.put("methodComments", build.toString());
+                    context.put("classComments", build.toString());
                 }
-                catch (Exception e1)
+
+                context.put("formDetDesc", "");
+                context.put("formDesc", "");
+                context.put("vFields", new ArrayList<ViewField>());
+                context.put("shwhidgrps", "");
+                context.put("asideLinkValues", str.toString());
+                context.put("copywright", getCopywright());
+                context.put("navigationLinks", nav.toString());
+                context.put("jsfuncs", "");
+
+                VelocityEngine engine = new VelocityEngine();
+                if (fileName.equals("index.html"))
                 {
-                    getLog().info("exception :" + e1.getMessage());
-                    getLog().error(e1);
+                    if(!isUseBootstrapUI())
+                    {
+                    	engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "file");
+                        engine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, dir.getAbsolutePath());
+                        engine.init();
+                        engine.mergeTemplate(fileName, context, writer);
+                    }
+                    else
+                    {
+                    	engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+                        engine.setProperty("classpath.resource.loader.class",
+                                ClasspathResourceLoader.class.getName());
+                        engine.init();
+                    	engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
+                    }
                 }
+                else
+                {
+                    engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "file");
+                    engine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, dir.getAbsolutePath());
+                    engine.init();
+                	engine.mergeTemplate(fileName, context, writer);
+                }
+
+                BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(dir.getAbsolutePath() + "/"
+                        + fileName)));
+                fwriter.write(writer.toString());
+                fwriter.close();
             }
 
         }
@@ -1433,7 +1710,59 @@ public class TestGeneratorMojo extends AbstractMojo
         }
     }
 
-    /**
+    private String getAlphabetDropDownHTML(String alphabet, String href, List<LinkObject> ddlinks,
+			Map<String, List<LinkObject>> mapOfDropDownSublinks) {
+    	VelocityEngine engine = new VelocityEngine();
+        engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+        engine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+        StringWriter writer = new StringWriter();
+        try
+        {
+        	engine.init();
+        	
+        	VelocityContext context = new VelocityContext();
+        	if(href==null) {
+        		href = "#";
+        	}
+        	context.put("href", href);
+        	context.put("alphabet", alphabet);
+        	context.put("links", ddlinks);
+        	context.put("sublinks", mapOfDropDownSublinks);
+        	
+            engine.mergeTemplate("/templates/alphateical-dropdown.vm", context, writer);
+            return writer.toString();
+        }
+        catch (Exception e1)
+        {
+            getLog().error(e1);
+        }
+		return null;
+	}
+
+	private String getAccordianHeadingHTML(LinkObject link, List<LinkObject> links) {
+    	VelocityEngine engine = new VelocityEngine();
+        engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+        engine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+        StringWriter writer = new StringWriter();
+        try
+        {
+        	engine.init();
+        	
+        	VelocityContext context = new VelocityContext();
+        	context.put("link", link);
+        	context.put("links", links);
+        	
+            engine.mergeTemplate("/templates/leftnav-accordian.vm", context, writer);
+            return writer.toString();
+        }
+        catch (Exception e1)
+        {
+            getLog().error(e1);
+        }
+		return null;
+	}
+
+	/**
      * @param claz
      * @param srcDir
      * @param mapOfComments
@@ -2188,7 +2517,7 @@ public class TestGeneratorMojo extends AbstractMojo
      * @throws Exception Add new ViewFeild objects that represnt the form elements on the test page of the give rest
      *             full service
      */
-    private void updateViewFields(@SuppressWarnings("rawtypes") Class claz, List<ViewField> parameters, String naming,
+    /*private void updateViewFields1(@SuppressWarnings("rawtypes") Class claz, List<ViewField> parameters, String naming,
             String formpnm, boolean isheaderParam, String heirarchy) throws Exception
     {
         if ((claz.equals(Integer.class) || claz.equals(String.class) || claz.equals(Short.class)
@@ -2220,7 +2549,7 @@ public class TestGeneratorMojo extends AbstractMojo
                 getLog().debug(viewField.toString());
             parameters.add(viewField);
         }
-        else if (claz.equals(MultipartFormDataInput.class))
+        else if (claz.getCanonicalName().equals("org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput"))
         {
             ViewField viewField = new ViewField();
             viewField.setType(isheaderParam ? "header" : "multipartform");
@@ -2229,7 +2558,8 @@ public class TestGeneratorMojo extends AbstractMojo
             if (isDebugEnabled())
                 getLog().debug(viewField.toString());
         }
-        else if (claz.equals(HttpServletResponse.class) || claz.equals(HttpServletRequest.class))
+        else if (claz.getCanonicalName().equals("javax.servlet.http.HttpServletResponse") 
+        		|| claz.getCanonicalName().equals("javax.servlet.http.HttpServletRequest"))
         {
             return;
         }
@@ -2538,7 +2868,7 @@ public class TestGeneratorMojo extends AbstractMojo
                         getLog().debug(viewField.toString());
                     parameters.add(viewField);
                 }
-                else if (field.getType().equals(MultipartFormDataInput.class))
+                else if (field.getType().getCanonicalName().equals("org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput"))
                 {
                     ViewField viewField = new ViewField();
                     viewField.setType(isheaderParam ? "header" : "multipartform");
@@ -2579,7 +2909,609 @@ public class TestGeneratorMojo extends AbstractMojo
             }
         }
     }
+    */
+    
+    /**
+     * @param claz
+     * @param parameters
+     * @param naming
+     * @param formpnm
+     * @param isheaderParam
+     * @param heirarchy
+     * @throws Exception Add new ViewFeild objects that represnt the form elements on the test page of the give rest
+     *             full service
+     */
+    @SuppressWarnings("rawtypes")
+    private void updateViewFields(Type claz, List<ViewField> parameters, String naming,
+            String formpnm, boolean isheaderParam, String heirarchy, List<Type> heirarchies, String defValue) throws Exception
+    {
+    	ViewField viewField = null;
+    	
+    	ParameterizedType type = null;
+		Class clas = null;
+		if(claz instanceof ParameterizedType)
+		{
+			type = (ParameterizedType)claz;
+			clas = (Class)type.getRawType();
+		}
+		else
+		{
+			clas = (Class)claz;
+		}
+    	
+        if (isPrimitive(clas))
+        {
+            viewField = new ViewField();
+            viewField.setType(isheaderParam ? "header" : "text");
+            viewField.setVarType(clas);
+            String name = formpnm;
+            if (naming != null)
+            {
+            	if(name==null)
+            		viewField.setLabel(naming);
+            	else
+            		viewField.setLabel(naming + "['" + name + "']");
+            	if(viewField.getLabel()!=null && viewField.getLabel().indexOf("[")!=-1)
+            	{
+            		viewField.setClaz(viewField.getLabel().substring(0, viewField.getLabel().lastIndexOf("[")));
+            	}
+            }
+            else
+                viewField.setLabel(name);
+            setValidation(clas, viewField);
+            if (isDebugEnabled())
+                getLog().debug(viewField.toString());
+            if(defValue!=null)
+            	viewField.getValues().add(defValue);
+            parameters.add(viewField);
+        }
+        else if (claz.equals(String.class) && formpnm == null && naming == null)
+        {
+            viewField = new ViewField();
+            viewField.setType(isheaderParam ? "header" : "textarea");
+            viewField.setVarType(clas);
+            viewField.setLabel("content");
+            if (isDebugEnabled())
+                getLog().debug(viewField.toString());
+            parameters.add(viewField);
+        }
+        else if (clas.getCanonicalName().equals("javax.servlet.http.HttpServletResponse") 
+        		|| clas.getCanonicalName().equals("javax.servlet.http.HttpServletRequest"))
+        {
+            return;
+        }
+        else if (isMap(clas))
+        {
+            viewField = new ViewField();
+            viewField.setType("map");
+            Type[] types = type.getActualTypeArguments();
+            if (!isPrimitive(types[0]) && isPrimitive(types[1]))
+            {
+                viewField.setType("kcmap");
+            }
+            else if (isPrimitive(types[0]) && !isPrimitive(types[1]))
+            {
+                viewField.setType("vcmap");
+            }
+            else if (!isPrimitive(types[0]) && !isPrimitive(types[1]))
+            {
+                viewField.setType("kvcmap");
+            }
+            String name = formpnm;
+            if (naming != null)
+            {
+            	if(name==null)
+            		viewField.setLabel(naming);
+            	else
+            		viewField.setLabel(naming + "['" + name + "']");
+            	if(viewField.getLabel()!=null && viewField.getLabel().indexOf("[")!=-1)
+            	{
+            		viewField.setClaz(viewField.getLabel().substring(0, viewField.getLabel().lastIndexOf("[")));
+            	}
+            }
+            else
+                viewField.setLabel(name);
+            if (isDebugEnabled())
+                getLog().debug(viewField.toString());
+            parameters.add(viewField);
+        }
+        else if (isCollection(clas))
+        {
+            viewField = new ViewField();
+            viewField.setType("list");
+            viewField.setType((clas.getSimpleName().endsWith("Set"))?"set":"list");
+            Type[] types = type.getActualTypeArguments();
+            if (isPrimitive(types[0]))
+            {
+            	setValidation(types[0], viewField);
+            }
+            else if(clas.getSimpleName().endsWith("Set"))
+            {
+            	viewField.setType("cset");
+            }
+            else
+            {
+            	viewField.setType("clist");
+            }
+            String name = formpnm;
+            if (naming != null)
+            {
+            	if(name==null)
+            		viewField.setLabel(naming);
+            	else
+            		viewField.setLabel(naming + "['" + name + "']");
+            	if(viewField.getLabel()!=null && viewField.getLabel().indexOf("[")!=-1)
+            	{
+            		viewField.setClaz(viewField.getLabel().substring(0, viewField.getLabel().lastIndexOf("[")));
+            	}
+            }
+            else
+                viewField.setLabel(name);
+            if (isDebugEnabled())
+                getLog().debug(viewField.toString());
+            parameters.add(viewField);
+        }
+        else if ((clas.isInterface() || Modifier.isAbstract(clas.getModifiers()) && heirarchies.size()==0))
+        {
+    		viewField = new ViewField();
+            viewField.setType("multipartform");
+            viewField.setLabel("Parameters");
+            parameters.add(viewField);
+            if (isDebugEnabled())
+                getLog().debug(viewField.toString());
+            return;
+        }
+        else
+        {
+        	updateObjectViewFields(clas, parameters, naming, formpnm, isheaderParam, heirarchy, heirarchies);
+        }
+    }
+    
+    @SuppressWarnings("rawtypes")
+    private List<Field> getAllFields(Class claz) {
+    	List<Field> allFields = new ArrayList<Field>();
+    	allFields.addAll(Arrays.asList(claz.getFields()));
+    	allFields.addAll(Arrays.asList(claz.getDeclaredFields()));
+    	
+    	if(!Object.class.equals(claz.getSuperclass())) {
+    		allFields.addAll(getAllFields(claz.getSuperclass()));
+    	}
+    	return allFields;
+    }
+    
+    
+    private String getHeirarchyStr(List<Type> fheirlst) {
+    	StringBuilder b = new StringBuilder();
+    	if(!fheirlst.isEmpty()) {
+    		for (Type type : fheirlst) {
+				b.append(type.toString()+".");
+			}
+    	}
+    	return b.toString();
+    }
+    
+    @SuppressWarnings({"rawtypes" })
+    private void updateObjectViewFields(Class claz, List<ViewField> parameters, String naming,
+            String formpnm, boolean isheaderParam, String heirarchy, List<Type> heirarchies) throws Exception {
 
+    	if(heirarchies.contains(claz) || heirarchies.size()>=2)return;
+    	heirarchies.add(claz);
+    	
+    	List<Field> allFields = getAllFields(claz);
+    	
+    	for (Field field : allFields) {
+    		
+    		if (Modifier.isStatic(field.getModifiers()))
+    			continue;
+    			
+			if(!field.isAccessible())
+			{
+				field.setAccessible(true);
+			}
+    		
+			List<Type> fheirlst = new ArrayList<Type>(heirarchies);
+			
+			if(isDebugEnabled())
+				getLog().info("Parsing Class " + getHeirarchyStr(fheirlst) + " field " + field.getName() + " type " + field.getType().equals(boolean.class));
+            
+			String nnaming = naming;
+            if (nnaming == null)
+            {
+            	nnaming = field.getName();
+            	//formpnm = field.getName();
+            }
+            else
+            {
+            	nnaming += ("['" + field.getName() + "']");
+            }
+            String nheirarchy = heirarchy;
+            boolean doit = true;
+            if (nheirarchy == null)
+                nheirarchy = "." + claz.getSimpleName() + "." + field.getType().getSimpleName() + ".";
+            else
+            {
+                if (nheirarchy.indexOf("." + field.getType().getSimpleName() + ".") == -1)
+                    nheirarchy += "." + field.getType().getSimpleName() + ".";
+                else
+                {
+                    doit = false;
+                    getLog().info("Ignoring recursive fields inside object heirarchy...");
+                }
+            }
+            if (doit)
+            {
+            	if (isPrimitive(field.getType()) || isMap(field.getType()) 
+            			|| isCollection(field.getType()) || !claz.equals(field.getType()))
+                {
+                	doit = true;
+                }
+                else
+                {
+                	doit = false;
+                    getLog().info("Ignoring recursive fields...");
+                }
+            	if(doit)
+            	{
+            		if(field.getType().isEnum())
+            			updateViewFields(String.class, parameters, nnaming, formpnm, false, nheirarchy, heirarchies, null);
+            		else
+            			updateViewFields(field.getGenericType(), parameters, nnaming, formpnm, false, nheirarchy, heirarchies, null);
+            	}
+            }
+			
+		}
+    }
+    
+    /**
+     * @param claz
+     * @param parameters
+     * @param naming
+     * @param formpnm
+     * @param isheaderParam
+     * @param heirarchy
+     * @throws Exception Add new ViewFeild objects that represnt the form elements on the test page of the give rest
+     *             full service
+     */
+    @SuppressWarnings("rawtypes")
+    private ViewField getViewField(Type claz) throws Exception
+    {
+    	ViewField viewField = null;
+    	try 
+    	{
+    		ParameterizedType type = null;
+    		Class clas = null;
+    		if(claz instanceof ParameterizedType)
+    		{
+    			type = (ParameterizedType)claz;
+    			clas = (Class)type.getRawType();
+    		}
+    		else
+    		{
+    			clas = (Class)claz;
+    		}
+    		
+    		List<Type> heirarchies = new ArrayList<Type>();
+	        if (isMap(clas))
+	        {
+	        	viewField = new ViewField();
+	            viewField.setValue(getMapValue(clas, type.getActualTypeArguments(), heirarchies));
+	        }
+	        else if (isCollection(clas))
+	        {
+	        	viewField = new ViewField();
+	            viewField.setValue(getListSetValue(clas, type.getActualTypeArguments(), heirarchies));
+	        }
+	        else if(!clas.isInterface())
+        	{
+	            viewField = new ViewField();
+	            viewField.setValue(getObject(claz, heirarchies));
+        	}
+    	} catch (Exception e) {
+    		getLog().error(e);
+    		getLog().info("Invalid class, cannot be represented as a form/object in a test case - class name = " + claz);
+    	}
+        return viewField;
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private Object getObject(Class claz, List<Type> heirarchies) throws Exception {
+
+    	if(claz.isEnum())return claz.getEnumConstants()[0];
+    	
+    	if (isMap(claz))
+        {
+    		return getMapValue(claz, claz.getTypeParameters(), heirarchies);
+        }
+        else if (isCollection(claz))
+        {
+        	return getListSetValue(claz, claz.getTypeParameters(), heirarchies);
+        }
+        else if(claz.isInterface() || Modifier.isAbstract(claz.getModifiers())) 
+        {
+        	return null;
+        }
+    	
+    	if(heirarchies.contains(claz) || heirarchies.size()>=2)return null;
+    	heirarchies.add(claz);
+    	
+    	Constructor cons = null;
+    	try {
+    		cons = claz.getConstructor(new Class[]{});
+		} catch (Exception e) {
+			getLog().error("No public no-args constructor found for class " + claz.getName());
+			return null;
+		}
+    	
+    	Object object = cons.newInstance(new Object[]{});
+    	List<Field> allFields = getAllFields(claz);
+    	
+    	for (Field field : allFields) {
+    		
+    		if (Modifier.isStatic(field.getModifiers()))
+    			continue;
+    			
+			if(!field.isAccessible())
+			{
+				field.setAccessible(true);
+			}
+    		
+			List<Type> fheirlst = new ArrayList<Type>(heirarchies);
+			
+			if(isDebugEnabled())
+				getLog().info("Parsing Class " + getHeirarchyStr(fheirlst) + " field " + field.getName() + " type " + field.getType().equals(boolean.class));
+            
+			if (isPrimitive(field.getType()))
+            {
+                field.set(object, getPrimitiveValue(field.getType()));
+            }
+            else if (isMap(field.getType()))
+            {
+            	ParameterizedType type = (ParameterizedType)field.getGenericType();
+            	field.set(object, getMapValue(field.getType(), type.getActualTypeArguments(), fheirlst));
+            }
+            else if (isCollection(field.getType()))
+            {
+            	ParameterizedType type = (ParameterizedType)field.getGenericType();
+            	field.set(object, getListSetValue(field.getType(), type.getActualTypeArguments(), fheirlst));
+            }
+            else if (!claz.equals(field.getType()))
+            {
+            	Object fieldval = getObject(field.getType(), fheirlst);
+            	field.set(object, fieldval);
+            }
+            else if (claz.equals(field.getType()))
+            {
+            	if(isDebugEnabled())
+            		getLog().info("Ignoring recursive fields...");
+            }
+		}
+        return object;
+    }
+    
+    @SuppressWarnings("rawtypes")
+	private Object getObject(Type claz, List<Type> heirarchies) throws Exception {
+    	
+    	ParameterizedType type = null;
+		Class clas = null;
+		if(claz instanceof ParameterizedType)
+		{
+			type = (ParameterizedType)claz;
+			clas = (Class)type.getRawType();
+		}
+		else
+		{
+			clas = (Class)claz;
+		}
+		if (isPrimitive(clas))
+        {
+            return getPrimitiveValue(clas);
+        }
+        else if (isMap(clas))
+        {
+        	return getMapValue(clas, type.getActualTypeArguments(), heirarchies);
+        }
+        else if (isCollection(clas))
+        {
+        	return getListSetValue(clas, type.getActualTypeArguments(), heirarchies);
+        }
+        else if(!clas.isInterface())
+    	{
+            return getObject(clas, heirarchies);
+    	}
+    	return null;
+    }
+    
+    
+    private Object getPrimitiveValue(Type claz) {
+    	 if (isPrimitive(claz))
+    	 {
+    		 if(claz.equals(boolean.class) || claz.equals(Boolean.class)) {
+    			 Random rand = new Random();
+    			 return rand.nextBoolean();
+    		 } else if(claz.equals(Date.class)) {
+    			 return new Date();
+    		 } else if(claz.equals(Double.class) || claz.equals(double.class)) {
+    			 Random rand = new Random(12345678L);
+    			 return rand.nextDouble();
+    		 } else if(claz.equals(Float.class) || claz.equals(float.class)) {
+    			 Random rand = new Random(12345678L);
+    			 return rand.nextFloat();
+    		 } else if(claz.equals(String.class)) {
+    			 return RandomStringUtils.randomAlphabetic(10);
+    		 } else if(claz.equals(Long.class) || claz.equals(long.class) || claz.equals(Number.class)) {
+    			 Random rand = new Random();
+    			 return new Long(rand.nextInt(123));
+    		 } else if(claz.equals(Integer.class) || claz.equals(int.class)) {
+    			 Random rand = new Random();
+    			 return new Integer(rand.nextInt(123));
+    		 } else if(claz.equals(Short.class) || claz.equals(short.class)) {
+    			 Random rand = new Random();
+    			 return new Short((short)rand.nextInt(123));
+    		 }
+    	 }
+    	 return null;
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private Object getMapValue(Type type, Type[] types, List<Type> heirarchies) throws Exception {
+    	
+    	Class claz = null;
+    	if(type.equals(Map.class) || type.equals(HashMap.class)
+                || type.equals(LinkedHashMap.class))
+    	{
+    		if(type.equals(Map.class))
+    		{
+    			claz = HashMap.class;
+    		}
+    		else
+    		{
+    			claz = (Class)type;
+    		}
+    	}
+    	
+    	Constructor cons = claz.getConstructor(new Class[]{});
+    	Object object = cons.newInstance(new Object[]{});
+    	
+    	for (int i = 0; i < 1; i++)
+    	{
+	    	Object k = null;
+	    	if(isPrimitive(types[0])) {
+	    		k = getPrimitiveValue(types[0]);
+	    	} else if(!heirarchies.contains(types[0])) {
+	    		if(types[0] instanceof Class)
+	    			k = getObject((Class)types[0], heirarchies);
+	    		else
+	    			k = getObject(types[0], heirarchies);
+	    		heirarchies.remove(types[0]);
+	    	}
+	    	Object v = null;
+	    	if(isPrimitive(types[1])) {
+	    		v = getPrimitiveValue(types[1]);
+	    	} else if(!heirarchies.contains(types[1])) {
+	    		if(types[1] instanceof Class)
+	    			v = getObject((Class)types[1], heirarchies);
+	    		else
+	    			v = getObject(types[1], heirarchies);
+	    		heirarchies.remove(types[1]);
+	    	}
+	    	if(k==null && isDebugEnabled()) {
+	    		getLog().info(types[0].toString());
+	    		getLog().info(types[1].toString());
+	    		getLog().error("Null key " + types[0]);
+	    	}
+    		((Map)object).put(k, v);
+    	}
+    	if(!isPrimitive(types[0]))
+    	{
+    		heirarchies.add(types[0]);
+    	}
+    	if(!isPrimitive(types[1]))
+    	{
+    		heirarchies.add(types[1]);
+    	}
+    	return object;
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private Object getListSetValue(Type type, Type[] types, List<Type> heirarchies) throws Exception {
+    	
+    	Class claz = null;
+    	if(type.equals(List.class) || type.equals(Collection.class)
+    			|| type.equals(ArrayList.class) || type.equals(LinkedList.class))
+    	{
+    		if(type.equals(List.class) || type.equals(Collection.class))
+    		{
+    			claz = ArrayList.class;
+    		}
+    		else
+    		{
+    			claz = (Class)type;
+    		}
+    	}
+    	else if(type.equals(Set.class) || type.equals(HashSet.class) || type.equals(LinkedHashSet.class))
+    	{
+    		if(type.equals(Set.class))
+    		{
+    			claz = HashSet.class;
+    		}
+    		else
+    		{
+    			claz = (Class)type;
+    		}
+    	}
+    	
+    	Constructor cons = claz.getConstructor(new Class[]{});
+    	Object object = cons.newInstance(new Object[]{});
+    	
+        if (types.length == 1)
+        {
+        	for (int i = 0; i < 1; i++) {
+	        	Object v = null;
+	        	if(isPrimitive(types[0])) {
+	        		v = getPrimitiveValue(types[0]);
+	        	} else if(!heirarchies.contains(types[0])) {
+		    		if(types[0] instanceof Class)
+		    			v = getObject((Class)types[0], heirarchies);
+		    		else
+		    			v = getObject(types[0], heirarchies);
+		    		heirarchies.remove(types[0]);
+		    	}
+	        	((Collection)object).add(v);
+			}
+        	if(!isPrimitive(types[0]))
+        	{
+        		heirarchies.add(types[0]);
+        	}
+        }
+    	return object;
+    }
+    
+    
+    private boolean isPrimitive(Type claz) {
+    	return (claz.equals(Integer.class) || claz.equals(String.class) || claz.equals(Short.class)
+                || claz.equals(Long.class) || claz.equals(Double.class) || claz.equals(Float.class)
+                || claz.equals(Boolean.class) || claz.equals(int.class) || claz.equals(short.class)
+                || claz.equals(long.class) || claz.equals(double.class) || claz.equals(float.class)
+                || claz.equals(boolean.class) || claz.equals(Number.class) || claz.equals(Date.class));
+    }
+    
+    private void setValidation(Type claz, ViewField vf) {
+    	if(isPrimitive(claz))
+    	{
+	    	if (claz.equals(Integer.class) || claz.equals(Short.class)
+	                || claz.equals(Long.class) || claz.equals(int.class) || claz.equals(short.class)
+	                || claz.equals(long.class) || claz.equals(Number.class))
+	    	{
+	    		vf.getValidations().add(new Validation("number"));
+	    	}
+	    	else if (claz.equals(Double.class) || claz.equals(Float.class) || claz.equals(double.class) 
+	    	|| claz.equals(float.class))
+	    	{
+	    		vf.getValidations().add(new Validation("float"));
+	    	}
+	    	else if (claz.equals(Boolean.class) || claz.equals(boolean.class))
+	    	{
+	    		vf.getValidations().add(new Validation("float"));
+	    	}
+	    	else if(claz.equals(Date.class))
+	    	{
+	    		vf.setType("date");
+	    	}
+    	}
+    }
+    
+    private boolean isCollection(Type claz) {
+    	return (claz.equals(List.class) || claz.equals(ArrayList.class)
+                || claz.equals(LinkedList.class) || claz.equals(Set.class) 
+                || claz.equals(HashSet.class) || claz.equals(LinkedHashSet.class)
+                || claz.equals(Collection.class));
+    }
+    
+    private boolean isMap(Type claz) {
+    	return (claz.equals(Map.class) || claz.equals(HashMap.class)
+                || claz.equals(LinkedHashMap.class) || claz.equals(TreeMap.class));
+    }
+    
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private ClassLoader getClassLoader()
     {

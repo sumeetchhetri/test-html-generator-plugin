@@ -1,0 +1,22 @@
+<div class="accordion-group">
+  <div class="accordion-heading list-group-item">
+  	  #if($link.getHref() && (($links && $links.isEmpty()) || !$links))
+		  <a class="accordion-toggle" href="$link.getHref()">
+			  $link.getName()
+		  </a>
+	  #else
+	  	  <a class="accordion-toggle" data-toggle="collapse" data-parent="#leftNavAccordionDiv" href="#leftNavCollapse$link.getCounter()">
+			  $link.getName()
+		  </a>
+	  #end
+  </div>
+  #if($links)
+  <div id="leftNavCollapse$link.getCounter()" class="accordion-body collapse in" style="margin-left:20px">
+	  <div class="accordion-inner">
+	  #foreach($link in $links)
+		  <a href="$link.getHref()" class="list-group-item asideLink"><b class="$link.getMethod().toLowerCase()big">$link.getMethod()</b>&nbsp;$link.getName()</a>
+	  #end
+	  </div>
+  </div>
+  #end
+</div>

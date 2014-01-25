@@ -1,7 +1,9 @@
 package com.testgen.view;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Sumeet Chhetri<br/>
@@ -34,6 +36,10 @@ public class ViewField {
 	private String varType;
 	
 	private String claz;
+	
+	private Object value;
+	
+	private Map<String, String> nodeTypes = new HashMap<String, String>();
 	
 	private List<String> values = new ArrayList<String>();
 	
@@ -149,6 +155,22 @@ public class ViewField {
 	 */
 	public void setClaz(String claz) {
 		this.claz = claz;
+	}
+	
+	public Object getValue() {
+		return value;
+	}
+
+	public void setValue(Object value) {
+		this.value = value;
+	}
+
+	public Map<String, String> getNodeTypes() {
+		return nodeTypes;
+	}
+
+	public void setNodeTypes(Map<String, String> nodeTypes) {
+		this.nodeTypes = nodeTypes;
 	}
 
 	/* (non-Javadoc)
