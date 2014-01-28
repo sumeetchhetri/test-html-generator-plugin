@@ -373,102 +373,102 @@
 						<div class="panel-body">
 							<form class="form form-vertical" id="$formName" name="$formName" $enctype style="margin-left:30px">
 							#if(!$schemaJson)
-							#if ($shwhidgrps && !$shwhidgrps.trim().equals(""))
-								<div style="margin-right:20px;"><b><u>Show/Hide Property Groups</u></b><br/><br/>$shwhidgrps</div>
-								<p>&nbsp;</p>
-								<center>*All blank input values will be set to null by default, If 'Blank Value' checkbox is checked value will be blank and not null<br/></center>
-								<p>&nbsp;</p>
-							#end
-							
-							#if($request_content)
-							<div class="control-group">
-								<label>Use Raw Text:&nbsp;</label>
-								<div class="controls"><input type="checkbox" onchange="hideShowClasses('form-elems','form-request_content', this);updatetawidcont()"/></div>
-							</div>
-							#end
-							
-							#foreach($vField in $vFields)
-								<div class="#if(!$vField.getType().equals("url"))form-elems#end control-group#if($vField.getClaz()) $vField.getName()#end">
-									<label>#if($vField.getType().equals("url"))url&nbsp;#else $vField.getName()&nbsp;#end
-									#if ($vField.description)
-										<span class="small">$vField.getDescription()</span>
-									#end
-									#if ($vField.getType().equals("text"))
-										<span style="font-size:10px;margin-left:10px">Blank</span><input type="checkbox" onchange="if(this.checked){document.getElementById('$vField.getName()').value='';document.getElementById('$vField.getName()').data='';} else {document.getElementById('$vField.getName()').value=null;document.getElementById('$vField.getName()').data=null;}" style="vertical-align:-2px;"/>
-									#end
-									</label>
-									<div class="controls">
-									#if ($vField.getType().equals("text"))
-										<input class="form-control" style="width: 70%;" type="text" name="$vField.getLabel()" id="$vField.getName()" #if($vField.getVarType())$vField.getVarType()#end/>
-									#elseif ($vField.getType().equals("date"))
-										<input class="form-control clsDatePicker" readonly style="width: 70%;" type="text" name="$vField.getLabel()" id="$vField.getName()" #if($vField.getVarType())$vField.getVarType()#end/>
-									#elseif ($vField.getType().equals("header"))
-										<input class="form-control headerparam" style="width: 70%;" type="text" id="$vField.getLabel()" value="#if($vField.getValues().size()>0)$vField.getValues().get(0)#end" #if($vField.getVarType())$vField.getVarType()#end/>
-									#elseif ($vField.getType().equals("url"))
-										<input class="form-control" type="text" style="width: 70%; height: 30px;" id="$vField.getLabel()" value="#if($vField.getValues().size()>0)$vField.getValues().get(0)#end"/>
-									#elseif ($vField.getType().equals("textarea"))
-										<textarea class="form-control" id="req-txtarea" style="width: 70%;" name="$vField.getLabel()" id="$vField.getLabel()">#if($vField.getValues().size()>0) $vField.getValues().get(0) #end</textarea>
-									#elseif ($vField.getType().equals("map"))
-										<input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+mapkey"/>(key) <br/>
-										<label>&nbsp;</label><input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+mapvalue"/>(value)<button class="btn-primary" onclick="addMapKV('$vField.getLabel()');return false;">Add</button>
-									#elseif ($vField.getType().equals("kcmap"))
-										<textarea class="form-control" style="width: 70%;" id="$vField.getLabel()+mapvalue"></textarea>(key) <br/>
-										<label>&nbsp;</label><input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+mapkey"/>(value)<button class="btn-primary" onclick="addMapKV('$vField.getLabel()');return false;">Add</button>
-									#elseif ($vField.getType().equals("vcmap"))
-										<input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+mapkey"/>(key) <br/>
-										<label>&nbsp;</label><textarea class="form-control" style="width: 70%;" id="$vField.getLabel()+mapvalue"></textarea>(value)<button class="btn-primary" onclick="addMapKV('$vField.getLabel()');return false;">Add</button>
-									#elseif ($vField.getType().equals("kvcmap"))
-										<textarea class="form-control" style="width: 70%;" id="$vField.getLabel()+mapvalue"></textarea>(key) <br/>
-										<label>&nbsp;</label><textarea id="$vField.getLabel()+mapvalue"style="width: 70%;"></textarea>(value)<button class="btn-primary" onclick="addMapKV('$vField.getLabel()');return false;">Add</button>
-									#elseif ($vField.getType().equals("list"))
-										<input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+listv"/><button class="btn-primary" onclick="addListV('$vField.getLabel()');return false;">Add</button>
-									#elseif ($vField.getType().equals("clist"))
-										<textarea class="form-control" style="width: 70%;" id="$vField.getLabel()+listv"></textarea><button class="btn-primary" onclick="addListV('$vField.getLabel()');return false;">Add</button>
-									#elseif ($vField.getType().equals("set"))
-										<input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+setv"/><button class="btn-primary" onclick="addSetV('$vField.getLabel()');return false;">Add</button>
-									#elseif ($vField.getType().equals("cset"))
-										<textarea id="$vField.getLabel()+setv" style="width: 70%;"></textarea><button class="btn-primary" onclick="addSetV('$vField.getLabel()');return false;">Add</button>
-									#elseif ($vField.getType().equals("select"))
-										<select class="form-control" name="$vField.getLabel()" id="$vField.getLabel()" style="width: 370px;">
-											#foreach( $value in $vField.getValues() )
-												<option value="$value">$value</option>
-											#end
-										</select>
-									#elseif ($vField.getType().equals("multipartform"))
-										<select class="form-control" id="$vField.getLabel()+sel" style="width: 370px;">
-											<option value="text">text</option>
-											<option value="file">file</option>
-										</select>(type) <br/>
-										<label>&nbsp;</label><input class="form-control" type="text" id="$vField.getLabel()+name"/>(name)<button class="btn-primary" onclick="addFormParm('$vField.getLabel()');return false;">Add</button>
-									#end
-									</div>
-								</div>
-							#end
-							
-							#if(!$consumes.equals("multipart/form-data"))
+								#if ($shwhidgrps && !$shwhidgrps.trim().equals(""))
+									<div style="margin-right:20px;"><b><u>Show/Hide Property Groups</u></b><br/><br/>$shwhidgrps</div>
+									<p>&nbsp;</p>
+									<center>*All blank input values will be set to null by default, If 'Blank Value' checkbox is checked value will be blank and not null<br/></center>
+									<p>&nbsp;</p>
+								#end
+								
+								#if($request_content)
 								<div class="control-group">
-									<label class=""></label>
-									<div class="controls">
-										<button type="submit" class="$httpMethod.toLowerCase()bigb" type="submit" onclick="executeTest('#93be7b20299b11e281c10800200c9a66_URL','$httpMethod','$consumes','#$formName');return false;">$httpMethod</button>
-									</div>
+									<label>Use Raw Text:&nbsp;</label>
+									<div class="controls"><input id="raw_req_cont_flag" type="checkbox" onchange="hideShowClasses('form-elems','form-request_content', this);updatetawidcont()"/></div>
 								</div>
-								<br/><br/><p></p><br/>
-								<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/>
-								<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:50px;width:auto;border:none;"></pre></div><br/><br/>
-								<p></p>
-							#else
-								<div class="control-group">
-									<label class=""></label>
-									<div class="controls">
-										<input type="submit" class="$httpMethod.toLowerCase()bigb" value="$httpMethod">
+								#end
+								
+								#foreach($vField in $vFields)
+									<div class="#if(!$vField.getType().equals("url"))form-elems#end control-group#if($vField.getClaz()) $vField.getName()#end">
+										<label>#if($vField.getType().equals("url"))url&nbsp;#else $vField.getName()&nbsp;#end
+										#if ($vField.description)
+											<span class="small">$vField.getDescription()</span>
+										#end
+										#if ($vField.getType().equals("text"))
+											<span style="font-size:10px;margin-left:10px">Blank</span><input type="checkbox" onchange="if(this.checked){document.getElementById('$vField.getName()').value='';document.getElementById('$vField.getName()').data='';} else {document.getElementById('$vField.getName()').value=null;document.getElementById('$vField.getName()').data=null;}" style="vertical-align:-2px;"/>
+										#end
+										</label>
+										<div class="controls">
+										#if ($vField.getType().equals("text"))
+											<input class="form-control" style="width: 70%;" type="text" name="$vField.getLabel()" id="$vField.getName()" #if($vField.getVarType())$vField.getVarType()#end/>
+										#elseif ($vField.getType().equals("date"))
+											<input class="form-control clsDatePicker" readonly style="width: 70%;" type="text" name="$vField.getLabel()" id="$vField.getName()" #if($vField.getVarType())$vField.getVarType()#end/>
+										#elseif ($vField.getType().equals("header"))
+											<input class="form-control headerparam" style="width: 70%;" type="text" id="$vField.getLabel()" value="#if($vField.getValues().size()>0)$vField.getValues().get(0)#end" #if($vField.getVarType())$vField.getVarType()#end/>
+										#elseif ($vField.getType().equals("url"))
+											<input class="form-control" type="text" style="width: 70%; height: 30px;" id="$vField.getLabel()" value="#if($vField.getValues().size()>0)$vField.getValues().get(0)#end"/>
+										#elseif ($vField.getType().equals("textarea"))
+											<textarea class="form-control" id="req-txtarea" style="width: 70%;" name="$vField.getLabel()" id="$vField.getLabel()">#if($vField.getValues().size()>0) $vField.getValues().get(0) #end</textarea>
+										#elseif ($vField.getType().equals("map"))
+											<input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+mapkey"/>(key) <br/>
+											<label>&nbsp;</label><input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+mapvalue"/>(value)<button class="btn-primary" onclick="addMapKV('$vField.getLabel()');return false;">Add</button>
+										#elseif ($vField.getType().equals("kcmap"))
+											<textarea class="form-control" style="width: 70%;" id="$vField.getLabel()+mapvalue"></textarea>(key) <br/>
+											<label>&nbsp;</label><input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+mapkey"/>(value)<button class="btn-primary" onclick="addMapKV('$vField.getLabel()');return false;">Add</button>
+										#elseif ($vField.getType().equals("vcmap"))
+											<input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+mapkey"/>(key) <br/>
+											<label>&nbsp;</label><textarea class="form-control" style="width: 70%;" id="$vField.getLabel()+mapvalue"></textarea>(value)<button class="btn-primary" onclick="addMapKV('$vField.getLabel()');return false;">Add</button>
+										#elseif ($vField.getType().equals("kvcmap"))
+											<textarea class="form-control" style="width: 70%;" id="$vField.getLabel()+mapvalue"></textarea>(key) <br/>
+											<label>&nbsp;</label><textarea id="$vField.getLabel()+mapvalue"style="width: 70%;"></textarea>(value)<button class="btn-primary" onclick="addMapKV('$vField.getLabel()');return false;">Add</button>
+										#elseif ($vField.getType().equals("list"))
+											<input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+listv"/><button class="btn-primary" onclick="addListV('$vField.getLabel()');return false;">Add</button>
+										#elseif ($vField.getType().equals("clist"))
+											<textarea class="form-control" style="width: 70%;" id="$vField.getLabel()+listv"></textarea><button class="btn-primary" onclick="addListV('$vField.getLabel()');return false;">Add</button>
+										#elseif ($vField.getType().equals("set"))
+											<input class="form-control" type="text" style="width: 70%;" id="$vField.getLabel()+setv"/><button class="btn-primary" onclick="addSetV('$vField.getLabel()');return false;">Add</button>
+										#elseif ($vField.getType().equals("cset"))
+											<textarea id="$vField.getLabel()+setv" style="width: 70%;"></textarea><button class="btn-primary" onclick="addSetV('$vField.getLabel()');return false;">Add</button>
+										#elseif ($vField.getType().equals("select"))
+											<select class="form-control" name="$vField.getLabel()" id="$vField.getLabel()" style="width: 370px;">
+												#foreach( $value in $vField.getValues() )
+													<option value="$value">$value</option>
+												#end
+											</select>
+										#elseif ($vField.getType().equals("multipartform"))
+											<select class="form-control" id="$vField.getLabel()+sel" style="width: 370px;">
+												<option value="text">text</option>
+												<option value="file">file</option>
+											</select>(type) <br/>
+											<label>&nbsp;</label><input class="form-control" type="text" id="$vField.getLabel()+name"/>(name)<button class="btn-primary" onclick="addFormParm('$vField.getLabel()');return false;">Add</button>
+										#end
+										</div>
 									</div>
-								</div>
-								<br/><br/><p></p><br/>
-								<label>Upload Progress&nbsp;</label><br/><br/><div class="progress" style="margin-left:200px"><div class="bar"></div><div class="percent">0%</div></div><br/>
-								<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/>
-								<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:50px;width:auto;border:none;"></pre></div><br/><br/>
-								<p></p>
-							#end
+								#end
+							
+								#if(!$consumes.equals("multipart/form-data"))
+									<div class="control-group">
+										<label class=""></label>
+										<div class="controls">
+											<button type="submit" class="$httpMethod.toLowerCase()bigb" type="submit" onclick="executeTest('#93be7b20299b11e281c10800200c9a66_URL','$httpMethod','$consumes','#$formName');return false;">$httpMethod</button>
+										</div>
+									</div>
+									<br/><br/><p></p><br/>
+									<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/>
+									<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:50px;width:auto;border:none;"></pre></div><br/><br/>
+									<p></p>
+								#else
+									<div class="control-group">
+										<label class=""></label>
+										<div class="controls">
+											<input type="submit" class="$httpMethod.toLowerCase()bigb" value="$httpMethod">
+										</div>
+									</div>
+									<br/><br/><p></p><br/>
+									<label>Upload Progress&nbsp;</label><br/><br/><div class="progress" style="margin-left:200px"><div class="bar"></div><div class="percent">0%</div></div><br/>
+									<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/>
+									<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:50px;width:auto;border:none;"></pre></div><br/><br/>
+									<p></p>
+								#end
 							#end
 							</form>
 						</div>
@@ -480,8 +480,9 @@
 			<!--/main-->
 		</div>
 		<div id="push" class=""></div>
+		<script type="text/javascript" src="resources/javascript-xpath-latest-cmp.js"></script>
 		<script type="text/javascript" src="resources/prettify.js"></script>
-        <script type='text/javascript' src="resources/jquery.min.js"></script>
+        <script type='text/javascript' src="resources/jquery-2.1.0.min.js"></script>
         <script type='text/javascript' src="resources/bootstrap.min.js"></script>
 		<script type="text/javascript" src="resources/json2.js"></script>
 		<script type="text/javascript" src="resources/jquery.form.js"></script>
@@ -502,7 +503,7 @@
         	#if($schemaJson)
         	var schema = JSON.parse('$schemaJson');
         	
-        	function generate(schema, heirar, isnm, extra, addclas, labinpdet)
+        	function generate(schema, heirar, isnm, addclas, labinpdet)
 			{
 				  if(schema.type=='string' || schema.type=='number' || schema.type=='integer' 
 				  		|| schema.type=='boolean' || schema.type=='date' || schema.type=='float'
@@ -513,20 +514,32 @@
 						var dtcls = "";
 						if(schema.type=='date')
 							dtcls = "clsDatePicker";
+						var isAttr = "";
+						if(schema.hasOwnProperty('isattr'))
+						{
+							isAttr = "isattr=\"true\";"
+						}
 						if(schema.hasOwnProperty('enum'))
 						{
-							var htm = "<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><br/><select "+labinpdet+" "+nmdef+" "+extra+" class=\"form-control "+addclas+""+dtcls+"\" style=\"width: 70%; height: 30px;\">";
+							var htm = "<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><br/><select "+isAttr+" "+labinpdet+" "+nmdef+" class=\"form-control "+addclas+""+dtcls+"\" style=\"width: 70%; height: 30px;\">";
 							for(var i=0;i<schema.enum.length;i++)
 								htm += "<option value=\""+schema.enum[i]+"\">"+schema.enum[i]+"</option>";
 							return htm + ("</select></div>");
 						}
 						else
-							return ("<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><br/><input "+labinpdet+" "+nmdef+" "+extra+" class=\"form-control "+addclas+""+dtcls+"\" onblur=\"validate(this, '"+schema.type+"')\" value=\""+valut+"\" style=\"width: 70%; height: 30px;\" type='text'/></div>");
+							return ("<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><br/><input "+isAttr+" "+labinpdet+" "+nmdef+" class=\"form-control "+addclas+""+dtcls+"\" onblur=\"validate(this, '"+schema.type+"')\" value=\""+valut+"\" style=\"width: 70%; height: 30px;\" type='text'/></div>");
 				  }
 				  else if(schema.type=='object')
 				  {
 						if(schema.hasOwnProperty('properties'))
 						{
+							if(!heirar && schema.hasOwnProperty('name'))
+							{
+								if(!heirar)
+									heirar = schema.name;
+								else
+									heirar += "['"+schema.name+"']";
+							}
 							var html = "<div class=\"control-group\">";
 							for (var property in schema.properties) {
 								if (schema.properties.hasOwnProperty(property)) {
@@ -535,10 +548,8 @@
 										hirNm = property;
 									else
 										hirNm += "['"+property+"']";
-									//var hirNm = (!heirar?"":heirar+"[") + property + "]";
 									var propobj = schema.properties[property];
-									//var margin = "style='margin-left:"+(step*5)+"px'";
-									var htmlp = generate(propobj, hirNm, isnm, "", addclas, "orig_val_cls=\""+hirNm+"\"");
+									var htmlp = generate(propobj, hirNm, isnm, addclas, "orig_val_cls=\""+hirNm+"\"");
 									html += htmlp;
 								}
 							}				
@@ -549,27 +560,22 @@
 				  {
 						if(schema.hasOwnProperty('items'))
 						{
-							//var hirNm = (!heirar?"":heirar);
 							var hirNm = heirar;	
 							if(!hirNm || hirNm=="")
 								hirNm = "";
 							if(!countMap.hasOwnProperty(hirNm))
 								countMap[hirNm] = 0;
-							var ohirNm = hirNm;
 							schemaMap[hirNm] = schema.items;
 							
+							var html = '<div id="_element_'+hirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" class="plusminuslist" optype="true" list_value_cls="'+hirNm+'" onclick=\"plusminuslistfunc(this)\">&nbsp;&nbsp;<b>+</b></a><a href="#" list_value_cls="'+hirNm+'" class="plusminuslist" optype="false" onclick=\"plusminuslistfunc(this)\">&nbsp;&nbsp;<b>-</b></a><br/>';
 							hirNm += "["+(countMap[hirNm]++)+"]";
-							//hirNm = (hirNm+"[" + (countMap[hirNm]++) +"]");
-							//var eleid = hirNm.replace('.','').replace('[','').replace(']','');
-							var html = '<div id="_element_'+ohirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+ohirNm+'<a href="#" onclick="addRemListElement(\''+ohirNm+'\',true)">&nbsp;&nbsp;<b>+</b></a><a href="#" onclick="addRemListElement(\''+ohirNm+'\',false)">&nbsp;&nbsp;<b>-</b></a><br/>';
-							html += generate(schema.items, hirNm, isnm, "", addclas, "orig_val_cls=\""+hirNm+"\"");
+							html += generate(schema.items, hirNm, isnm, addclas, "orig_val_cls=\""+hirNm+"\"");
 							html += "</div>";				
 							return html;
 						}
 				  }
 				  else if(schema.type=='map')
 				  {
-						//var hirNm = (!heirar?"":heirar)
 						var hirNm = heirar;
 						if(!hirNm)
 							hirNm = "";
@@ -577,54 +583,68 @@
 						{
 							if(schema.types.hasOwnProperty('key') && schema.types.hasOwnProperty('value'))
 							{
-								var eleid = hirNm;//.replace('.','').replace('[','').replace(']','');
-								var html = '<div id="_element_'+eleid+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" onclick="addRemMapElement(\''+hirNm+'\', true)"><b>+</b></a><a href="#" onclick="addRemMapElement(\''+hirNm+'\', false)"><b>-</b></a><br/>';
-								var evnt = "onblur=\"updateMapValueNms('"+hirNm+"',this)\" map_value_cls=\""+hirNm+"\"";
-								html += generate(schema.types.key, hirNm, false, evnt, "map_key_cls", "");
+								#if($consumes.equals("application/xml") && $request_content)
+								var updschema = {};
+								updschema.type = "object";	
+								updschema.properties = {};
+								updschema.properties.entry = {};
+								updschema.properties.entry.type = "array";
+								updschema.properties.entry.items = {};
+								updschema.properties.entry.items.type = "object";
+								updschema.properties.entry.items.properties = {};
+								updschema.properties.entry.items.properties.key = schema.types.key;
+								updschema.properties.entry.items.properties.value = schema.types.value;
+								return generate(updschema, hirNm, isnm, addclas, labinpdet);
+								#end
+								
+								if(!countMap.hasOwnProperty(hirNm))
+									countMap[hirNm] = 0;
+								var contid = "_ele_"+hirNm+(countMap[hirNm]++);
+								var html = '<div id="_element_'+hirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" class="plusminusmap" optype="true" map_value_cls="'+hirNm+'" onclick=\"plusminusmapfunc(this)\">&nbsp;&nbsp;<b>+</b></a><a href="#" map_value_cls="'+hirNm+'" class="plusminusmap" optype="false" onclick=\"plusminusmapfunc(this)\">&nbsp;&nbsp;<b>-</b></a><br/><div  id="'+contid+'">';
+								html += generate(schema.types.key, hirNm, false, "map_key_cls", "onblur=\"updateMapValueNms(this)\" map_value_cls=\""+hirNm+"\"");
 								var cls = hirNm + " " + addclas;
-								html += generate(schema.types.value, hirNm, true, "", cls, "orig_val_cls=\""+hirNm+"\"");
-								html += "</div>";
-								schemaMap[hirNm] = schema.types;
+								html += generate(schema.types.value, hirNm, true, cls, "orig_val_cls=\""+hirNm+"\"");
+								html += "</div></div>";
+								schemaMap[hirNm] = schema.types;								
 								return html;
 							}
 						}
 				  }
 			}
 
-			function updateMapValueNms(clsnm, key)
+			function updateMapValueNms(key)
 			{
+				var clsnm = key.getAttribute('map_value_cls');
 				if(key.value.trim()=="")return;
 				if(!key.hasOwnProperty('lastclsnm'))
 					key.lastclsnm = "";
 				var nclsnm = clsnm;
+				var kval = key.value.replace(/\'/g,"\'");
 				if(nclsnm.lastIndexOf("[")!=-1)
-					nclsnm = nclsnm.substring(0, nclsnm.lastIndexOf("[")) + "['" + key.value + "']" + nclsnm.substring(nclsnm.lastIndexOf("["));
+					nclsnm = nclsnm.substring(0, nclsnm.lastIndexOf("[")) + "['" + kval + "']" + nclsnm.substring(nclsnm.lastIndexOf("["));
 				else
-					nclsnm += "['" + key.value + "']";
-				$('.'+clsnm).each(function() {
-					
-					this.className = this.className.replace(key.lastclsnm, "");
-					this.className += " " + nclsnm + " ";					
-					if(this.nodeName.toLowerCase()=="input")
+					nclsnm += "['" + kval + "']";
+				var nodes = getElementsByClassName(clsnm, key.parentNode.parentNode);
+				for(var i =0;i<nodes.length;i++)
+				{
+					var node = nodes[i];
+					node.className = node.className.replace(key.lastclsnm, "");
+					node.className += " " + nclsnm + " ";					
+					if(node.nodeName.toLowerCase()=="input")
 					{
-						var nnnm = this.getAttribute('orig_val_cls');
-						if(nnnm.indexOf("[")!=-1)
-							nnnm = nclsnm + nnnm.substring(nnnm.indexOf("["));
-						else
-							nnnm = nclsnm;
-						this.name = nnnm
+						var nnnm = node.getAttribute('orig_val_cls');
+						nnnm += "['" + kval + "']";
+						node.name = nnnm
 					}
-					else if(this.nodeName.toLowerCase()=="label")
+					else if(node.nodeName.toLowerCase()=="label")
 					{
-						var nnnm = this.getAttribute('orig_val_cls');
-						if(nnnm.indexOf("[")!=-1)
-							nnnm = nclsnm + nnnm.substring(nnnm.indexOf("["));
-						else
-							nnnm = nclsnm;
-						this.name = nnnm
-						this.innerHTML = nnnm
+						var nnnm = node.getAttribute('orig_val_cls');
+						nnnm += "['" + kval + "']";
+						node.name = nnnm
+						node.innerHTML = nnnm
 					}
-				});
+				}
+				//);
 				key.lastclsnm = " " +nclsnm+" ";
 			}
         	#end
@@ -638,9 +658,22 @@
 				}
 			}
 			
+			#if($consumes.equals("application/xml") && $request_content)
+			var requestXMLNode = getXMLNode('$request_content');
+			#end
+			
 			function updatetawidcont()
 			{
-				var cont = JSON.stringify($('#$formName').serializeObject(), undefined, "\t");
+				var cont = "";
+				#if(!$consumes.equals("application/xml"))
+					cont = JSON.stringify($('#$formName').serializeObject(), undefined, "\t");
+				#else
+					if(requestXMLNode!=undefined)
+					{
+						cont = $('#$formName').serializeObjectToStrictXML(requestXMLNode);
+						cont = vkbeautify.xml(cont);
+					}
+				#end
 				if(cont!="" && $('#req-txtarea').length>0)
 				{
 					$('#req-txtarea').val(cont).trigger('autosize.resize');
@@ -663,12 +696,12 @@
 							handleAuth(currToken);
 						
 						#if($schemaJson)
-						$('#$formName').html(generate(schema, '', true, '', '', ''));
+						$('#$formName').html(generate(schema, '', true, '', ''));
 						
 						$('#$formName').prepend(
 							'<div class="control-group"> \
 								<label>Use Raw Text:&nbsp;</label> \
-								<div class="controls"><input type="checkbox" onchange="hideShowClasses(\'form-elems\',\'form-request_content\', this);updatetawidcont()"/></div> \
+								<div class="controls"><input id="raw_req_cont_flag" type="checkbox" onchange="hideShowClasses(\'form-elems\',\'form-request_content\', this);updatetawidcont()"/></div> \
 							</div> \
 							#foreach($vField in $vFields)
 							#if ($vField.getType().equals("url"))
@@ -685,34 +718,35 @@
 								<label>Content-Type&nbsp; \
 								</label> \
 								<div class="controls"> \
-								<select class="form-control" style="width: 70%; height: 30px;"> \
-									<option value="application/json">JSON</option> \
-									<option value="application/xml">XML</option> \
+								<select class="form-control" style="width: 70%; height: 30px;" id="raw_req_cont_type"> \
+									<option value="application/json" #if(!$consumes.equals("application/xml"))selected#end>JSON</option> \
+									<option value="application/xml" #if($consumes.equals("application/xml"))selected#end>XML</option> \
 								</select> \
 								</div> \
 							</div>');	
 						
 						$('.map_key_cls').each(function() {
 							if(this.nodeName.toLowerCase()=="input")
-								updateMapValueNms(this.getAttribute('map_value_cls'), this);
+								updateMapValueNms(this);
 						});
 						if($('#req-txtarea').length==0)
 						{
 							$('#$formName').append('<div class="controls form-request_content"><label> Request Content&nbsp;</label>'
-									 + '<textarea class="form-control" id="req-txtarea" style="width: 70%;">#if($request_content)$request_content#end</textarea></div>');
+									 + '<textarea class="form-control" id="req-txtarea" style="width: 70%;"></textarea></div>');
+							#if($request_content)$('#req-txtarea').val('$request_content');#end
 							$('#req-txtarea').autosize();
 							$('#req-txtarea').parent().hide();
 						}
 						else
 						{
 							$('#req-txtarea').parent().addClass('form-request_content');
-							$('#req-txtarea').val('#if($request_content)$request_content#end');
+							#if($request_content)$('#req-txtarea').val('$request_content');#end
 							$('#req-txtarea').autosize();
 							$('#req-txtarea').parent().hide();
 						}
 						$('.clsDatePicker').datetimepicker({format: 'Y-m-d\\TH:i:s.000\\Z', step:1, validateOnBlur:false});
 						$('#$formName').append(
-						#if(!$consumes.equals("multipart/form-data"))
+							#if(!$consumes.equals("multipart/form-data"))
 								'<div class="control-group"> \
 									<label class=""></label> \
 									<div class="controls"> \
@@ -739,6 +773,14 @@
 						);
 						#else
 						$('.clsDatePicker').datetimepicker({format: 'Y-m-d\\TH:i:s.000\\Z', step:1, validateOnBlur:false});
+						if($('#req-txtarea').length==0)
+						{
+							$('#$formName').append('<div class="form-request_content"><label> Request Content&nbsp;</label>'
+									 + '<textarea class="form-control" style="width:60%" id="req-txtarea"></textarea></div>');
+							#if($request_content)$('#req-txtarea').val('$request_content');#end
+							$('#req-txtarea').autosize();
+							$('#req-txtarea').parent().hide();
+						}
 						#end
 					});
 				}
