@@ -27,6 +27,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
  * 		<requestContentType>json</requestContentType>
  * 		<useBootstrapUI>true</useBootstrapUI>
  *      <urlPrefix>urlprefix</urlPrefix>
+ *      <urlSuffix>urlsuffix</urlSuffix>
  * 		<resourcepath>src/main/resources</resourcepath>
  * 		<uripath>testgen</uripath>
  * 		<copywright>Testgen 2012</copywright>
@@ -410,4 +411,16 @@ public class TestgenConfiguration {
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
+	
+	private String urlSuffix;
+
+    public String getUrlSuffix()
+    {
+        return urlSuffix;
+    }
+
+    public void setUrlSuffix(String urlSuffix)
+    {
+        this.urlSuffix = urlSuffix;
+    }
 }

@@ -11,6 +11,9 @@
 				<div id="header">
 					<h1>
 						TestGen - HTML For your API's
+						<span>
+							<input type="text" value="Search" style="width:40%;float:right;height:25px" onclick="this.value=''" onkeyup="searchLeftNavs(this)"/>
+						</span>
 					</h1>
 				</div>
 				
@@ -130,15 +133,17 @@
 								#if(!$consumes.equals("multipart/form-data"))
 									<button type="submit" class="spbutton" type="submit" onclick="executeTest('#93be7b20299b11e281c10800200c9a66_URL','$httpMethod','$consumes','#$formName');return false;">Submit</button>
 									<br/><br/><p></p><br/>
-									<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/>
-									<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/>
+									<label>Response Time:&nbsp;</label><span id="restime"></span><br/><br/>
+									<label>Response Headers:&nbsp;</label><div><pre id="reshdrs" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div>
+									<label>Response:&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/>
 									<p></p>
 								#else
 									<input type="submit" class="spbutton" value="Submit">
 									<br/><br/><p></p><br/>
 									<label>Upload Progress&nbsp;</label><br/><br/><div class="progress" style="margin-left:200px"><div class="bar"></div><div class="percent">0%</div></div><br/>
-									<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/>
-									<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/>
+									<label>Response Time:&nbsp;</label><span id="restime"></span><br/><br/>
+									<label>Response Headers:&nbsp;</label><div><pre id="reshdrs" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div>
+									<label>Response:&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/>
 									<p></p>
 								#end
 							#end
@@ -163,11 +168,16 @@
 								#if($schemaJson)
 					        	var schema = JSON.parse('$schemaJson');
 					        	
+					        	function isPrimitive(type)
+					        	{
+					        		return (type=='string' || type=='number' || type=='integer' 
+										  		|| type=='boolean' || type=='date' || type=='float'
+										  		|| type=='double');
+					        	}
+					        	
 					        	function generate(schema, heirar, isnm, addclas, labinpdet)
 								{
-									  if(schema.type=='string' || schema.type=='number' || schema.type=='integer' 
-									  		|| schema.type=='boolean' || schema.type=='date' || schema.type=='float'
-									  		|| schema.type=='double')
+									  if(isPrimitive(schema.type))
 									  {
 									  		var valut = generateRandom(schema.type);
 									  		var nmdef = (isnm?("name=\""+heirar+"\""):"");
@@ -181,7 +191,7 @@
 											}
 											if(schema.hasOwnProperty('enum'))
 											{
-												var htm = "<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><br/><select "+isAttr+" "+labinpdet+" "+nmdef+" class=\"form-control "+addclas+""+dtcls+"\">";
+												var htm = "<div class=\"form-elems controls\"><label class=\""+addclas+"\" "+labinpdet+">"+heirar+"</label><select "+isAttr+" "+labinpdet+" "+nmdef+" class=\"form-control "+addclas+""+dtcls+"\">";
 												for(var i=0;i<schema.enum.length;i++)
 													htm += "<option value=\""+schema.enum[i]+"\">"+schema.enum[i]+"</option>";
 												return htm + ("</select><br/><br/></div>");
@@ -220,7 +230,7 @@
 													countMap[hirNm] = 0;
 												schemaMap[hirNm] = schema.items;
 												
-												var html = '<div id="_element_'+hirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" class="plusminuslist" optype="true" list_value_cls="'+hirNm+'" onclick=\"plusminuslistfunc(this)\">&nbsp;&nbsp;<b>+</b></a><a href="#" list_value_cls="'+hirNm+'" class="plusminuslist" optype="false" onclick=\"plusminuslistfunc(this)\">&nbsp;&nbsp;<b>-</b></a><br/>';
+												var html = '<div id="_element_'+hirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" style="text-decoration:none;" class="plusminuslist" optype="true" list_value_cls="'+hirNm+'" onclick=\"plusminuslistfunc(this)\">&nbsp;&nbsp;<b>+</b></a><a href="#" list_value_cls="'+hirNm+'" style="text-decoration:none;" class="plusminuslist" optype="false" onclick=\"plusminuslistfunc(this)\">&nbsp;&nbsp;<b>-</b></a><br/>';
 												hirNm += "["+(countMap[hirNm]++)+"]";
 												html += generate(schema.items, hirNm, isnm, addclas, "orig_val_cls=\""+hirNm+"\"");
 												html += "</div>";				
@@ -249,11 +259,23 @@
 													updschema.properties.entry.items.properties.value = schema.types.value;
 													return generate(updschema, hirNm, isnm, addclas, labinpdet);
 													#end
+								
+													if(!isPrimitive(schema.types.key.type))
+													{
+														var updschema = {};
+														updschema.type = "array";	
+														updschema.items = {};
+														updschema.items.type = "object";
+														updschema.items.properties = {};
+														updschema.items.properties.key = schema.types.key;
+														updschema.items.properties.value = schema.types.value;
+														return generate(updschema, hirNm, isnm, addclas, labinpdet);
+													}
 												
 													if(!countMap.hasOwnProperty(hirNm))
 														countMap[hirNm] = 0;
 													var contid = "_ele_"+hirNm+(countMap[hirNm]++);
-													var html = '<div id="_element_'+hirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" class="plusminusmap" optype="true" map_value_cls="'+hirNm+'" onclick=\"plusminusmapfunc(this)\">&nbsp;&nbsp;<b>+</b></a><a href="#" map_value_cls="'+hirNm+'" class="plusminusmap" optype="false" onclick=\"plusminusmapfunc(this)\">&nbsp;&nbsp;<b>-</b></a><br/><div  id="'+contid+'">';
+													var html = '<div id="_element_'+hirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" style="text-decoration:none;" class="plusminusmap" optype="true" map_value_cls="'+hirNm+'" onclick=\"plusminusmapfunc(this)\">&nbsp;&nbsp;<b>+</b></a><a href="#" map_value_cls="'+hirNm+'" style="text-decoration:none;" class="plusminusmap" optype="false" onclick=\"plusminusmapfunc(this)\">&nbsp;&nbsp;<b>-</b></a><br/><div  id="'+contid+'">';
 													html += generate(schema.types.key, hirNm, false, "map_key_cls", "onblur=\"updateMapValueNms(this)\" map_value_cls=\""+hirNm+"\"");
 													var cls = hirNm + " " + addclas;
 													html += generate(schema.types.value, hirNm, true, cls, "orig_val_cls=\""+hirNm+"\"");
@@ -454,14 +476,16 @@
 											#if(!$consumes.equals("multipart/form-data"))
 												<button type="submit" class="spbutton" type="submit" onclick="executeTest(\'#93be7b20299b11e281c10800200c9a66_URL\',\'$httpMethod\',\'$consumes\',\'#$formName\');return false;">Submit</button> \
 												<br/><br/><p></p><br/> \
-												<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/> \
-												<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/> \
+												<label>Response Time:&nbsp;</label><span id="restime"></span><br/><br/> \
+												<label>Response Headers:&nbsp;</label><div><pre id="reshdrs" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div> \
+												<label>Response:&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/> \
 												<p></p> \
 											#else
 												<input type="submit" class="spbutton" value="Submit"> \
 												<br/><br/><p></p><br/> \
 												<label>Upload Progress&nbsp;</label><br/><br/><div class="progress" style="margin-left:200px"><div class="bar"></div><div class="percent">0%</div></div><br/> \
 												<label>Response Time&nbsp;</label><span id="restime"></span><br/><br/> \
+												<label>Response Headers&nbsp;</label><div><pre id="reshdrs" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/> \
 												<label>Response&nbsp;</label><div><br/><pre id="status" class="prettyprint" style="word-wrap:break-word;margin-left:200px;width:auto;background-color: #ebf4fb;border:none;"></pre></div><br/><br/> \
 												<p></p> \
 											#end
@@ -710,8 +734,74 @@
 									{	
 										$('#$formName').append('<label>'+temkey+'&nbsp;</label><input type="file" id="'+label+temkey+'" name="'+temkey+'"/><br/><br/>');													
 									}
-								}							
+								}	
 								#end
+								
+								function searchLeftNavs(ele)
+								{
+									var term = ele.value.trim();
+									$('.service').each(function() {
+										if(term=='')
+										{
+											if($(this).parent().parent().prop("tagName").toLowerCase()=="h3")
+												$(this).parent().parent().show();
+											else if($(this).parent().prop("tagName").toLowerCase()=="h3")
+												$(this).parent().show();
+										}
+										else
+										{
+											if($(this).text().search(new RegExp(term, "i"))==-1)
+											{
+												if($(this).parent().parent().prop("tagName").toLowerCase()=="h3")
+													$(this).parent().parent().hide();
+												else if($(this).parent().prop("tagName").toLowerCase()=="h3")
+													$(this).parent().hide();
+											}
+											else
+											{
+												if($(this).parent().parent().prop("tagName").toLowerCase()=="h3")
+													$(this).parent().parent().show();
+												else if($(this).parent().prop("tagName").toLowerCase()=="h3")
+													$(this).parent().show();
+											}
+										}
+									});
+									$('#aside h3').each(function() {
+										if($(this).children().length==1)return;
+										if(term=='')
+										{
+											$(this).parent().children().eq(0).show();
+											$(this).children().show();
+											$(this).show();
+											$(this).children().eq(0).show();
+											$(this).parent().show();
+										}
+										else
+										{
+											var flag = false;
+											$(this).children('.asideSubLink').each(function() {
+												$(this).children('.asideLink').each(function() {
+													if($(this).children().eq(0).text().search(new RegExp(term, "i"))==-1 && $(this).parent().parent().children().eq(0).text().search(new RegExp(term, "i"))==-1)
+														$(this).parent().hide();
+													else
+													{
+														flag = true;
+														$(this).parent().show();
+													}
+												});												
+											});
+											if(flag)
+											{
+												$(this).show();
+												$(this).children().eq(0).show();
+											}
+											else
+											{
+												$(this).hide();
+											}
+										}
+									});
+								}		
 							</script>
 						</div>						
 					</div>	
