@@ -601,21 +601,20 @@
 								updschema.properties.entry.items.properties.key = schema.types.key;
 								updschema.properties.entry.items.properties.value = schema.types.value;
 								return generate(updschema, hirNm, isnm, addclas, labinpdet);
+								#else
+								var updschema = {};
+								updschema.type = "array";
+								updschema.mtype = "map";
+								updschema.items = {};
+								updschema.items.type = "object";
+								updschema.items.properties = {};
+								updschema.items.properties.key = schema.types.key;
+								updschema.items.properties.value = schema.types.value;
+								schemaMap[hirNm+"_dummymap"] = updschema;
+								return generate(updschema, hirNm, isnm, addclas, labinpdet);
 								#end
 								
-								if(!isPrimitive(schema.types.key.type))
-								{
-									var updschema = {};
-									updschema.type = "array";	
-									updschema.items = {};
-									updschema.items.type = "object";
-									updschema.items.properties = {};
-									updschema.items.properties.key = schema.types.key;
-									updschema.items.properties.value = schema.types.value;
-									return generate(updschema, hirNm, isnm, addclas, labinpdet);
-								}
-								
-								if(!countMap.hasOwnProperty(hirNm))
+								/*if(!countMap.hasOwnProperty(hirNm))
 									countMap[hirNm] = 0;
 								var contid = "_ele_"+hirNm+(countMap[hirNm]++);
 								var html = '<div id="_element_'+hirNm+'" class="form-elems" style="border:1px dotted black;padding:10px;margin-top:10px;">'+hirNm+'<a href="#" class="plusminusmap" optype="true" map_value_cls="'+hirNm+'" onclick=\"plusminusmapfunc(this)\">&nbsp;&nbsp;<b>+</b></a><a href="#" map_value_cls="'+hirNm+'" class="plusminusmap" optype="false" onclick=\"plusminusmapfunc(this)\">&nbsp;&nbsp;<b>-</b></a><br/><div  id="'+contid+'">';
@@ -624,7 +623,7 @@
 								html += generate(schema.types.value, hirNm, true, cls, "orig_val_cls=\""+hirNm+"\"");
 								html += "</div></div>";
 								schemaMap[hirNm] = schema.types;								
-								return html;
+								return html;*/
 							}
 						}
 				  }
@@ -662,7 +661,6 @@
 						node.innerHTML = nnnm
 					}
 				}
-				//);
 				key.lastclsnm = " " +nclsnm+" ";
 			}
         	#end
