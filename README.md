@@ -13,7 +13,7 @@ The test-html-generator-plugin a.k.a testgen plugin generates beautiful HTML tes
 
 Example
 ====
-There is an example in the public domain as well showcasing the usage of this plugin and the other plugin I built [gatf][1]. The example showcases 4 example scenarios. For the source code used to generate the beautiful HTML test pages please refer the [Sample Application][2], the AuthenticationServiceImpl java class and the ExampleBeanServiceImpl java class files are the source files used to generate the lovely HTML pages showcased here at [Testgen Pages][3].
+There is an example in the public domain as well showcasing the usage of this plugin and the other plugin I built [gatf][1]. The example showcases 4 example scenarios. For the source code used to generate the beautiful HTML test pages please refer the [Sample Application][2], the AuthenticationServiceImpl and the ExampleBeanServiceImpl class files are the source files used to generate the lovely HTML pages showcased here at [Testgen Pages][3].
 
 There are 4 example scenarios as i mentioned, the API's created in the above sample app are capable of consuming/producing both JSON/XML. So the scenarios are
  1. Generate HTML pages with JSON/JSON request/response and the latest bootstrap UI enabled [JSON-bootstrap][4]
@@ -272,12 +272,12 @@ user@localhost# java -jar test-html-generator-plugin-1.6.jar configuration.xml
 
 
 [1]:https://github.com/sumeetchhetri/gatf
-[2]:http://lit-savannah-1186.herokuapp.com/tests.html
+[2]:http://lit-savannah-1186.herokuapp.com/api-source
 [3]:http://lit-savannah-1186.herokuapp.com/
-[4]:http://lit-savannah-1186.herokuapp.com/testgen-json1/
-[5]:http://lit-savannah-1186.herokuapp.com/testgen-json2/
-[6]:http://lit-savannah-1186.herokuapp.com/testgen-xml1/
-[7]:http://lit-savannah-1186.herokuapp.com/testgen-xml2/
+[4]:http://lit-savannah-1186.herokuapp.com/testgen-json1/index.html
+[5]:http://lit-savannah-1186.herokuapp.com/testgen-json2/index.html
+[6]:http://lit-savannah-1186.herokuapp.com/testgen-xml1/index.html
+[7]:http://lit-savannah-1186.herokuapp.com/testgen-xml2/index.html
 [8]:http://lit-savannah-1186.herokuapp.com/testgen-json1/TestLogin.html
 
 License
