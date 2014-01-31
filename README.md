@@ -272,7 +272,7 @@ user@localhost# java -jar test-html-generator-plugin-1.6.jar configuration.xml
 
 
 [1]:https://github.com/sumeetchhetri/gatf
-[2]:http://lit-savannah-1186.herokuapp.com/api-source
+[2]:http://lit-savannah-1186.herokuapp.com/api-source/
 [3]:http://lit-savannah-1186.herokuapp.com/
 [4]:http://lit-savannah-1186.herokuapp.com/testgen-json1/index.html
 [5]:http://lit-savannah-1186.herokuapp.com/testgen-json2/index.html
