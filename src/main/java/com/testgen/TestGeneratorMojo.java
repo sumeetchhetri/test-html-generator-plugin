@@ -3026,7 +3026,7 @@ public class TestGeneratorMojo extends AbstractMojo
             		viewField.setClaz(viewField.getLabel().substring(0, viewField.getLabel().lastIndexOf("[")));
             	}
             }
-            else
+            else if(name!=null)
                 viewField.setLabel(name);
             setValidation(clas, viewField);
             if (isDebugEnabled())
@@ -3079,7 +3079,7 @@ public class TestGeneratorMojo extends AbstractMojo
             		viewField.setClaz(viewField.getLabel().substring(0, viewField.getLabel().lastIndexOf("[")));
             	}
             }
-            else
+            else if(name!=null)
                 viewField.setLabel(name);
             if (isDebugEnabled())
                 getLog().debug(viewField.toString());
@@ -3115,7 +3115,7 @@ public class TestGeneratorMojo extends AbstractMojo
             		viewField.setClaz(viewField.getLabel().substring(0, viewField.getLabel().lastIndexOf("[")));
             	}
             }
-            else
+            else if(name!=null)
                 viewField.setLabel(name);
             if (isDebugEnabled())
                 getLog().debug(viewField.toString());
