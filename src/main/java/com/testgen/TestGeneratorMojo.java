@@ -75,6 +75,9 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -1135,7 +1138,52 @@ public class TestGeneratorMojo extends AbstractMojo
                                     }
                                 }
                                 
-                                if(contentvf!=null && contentvf.getValue()!=null && !isPrimitive(contentvf.getValue().getClass()))
+                                boolean skipContent = false;
+                                if(!parameters.isEmpty())
+                                {
+                                	for (ViewField vf : parameters) {
+										if("multipartform".equals(vf.getType()))
+										{
+											skipContent = true;
+											break;
+										}
+									}
+                                	
+                                	if(contentvf!=null && contentvf.getValue()!=null && !isPrimitive(contentvf.getValue().getClass()))
+                                	{
+                                		ObjectMapper jsonMapper = new ObjectMapper();
+	                                	String schemaJson = jsonMapper.generateJsonSchema(contentvf.getValue().getClass()).toString();
+	                                	schemaJson = schemaJson.replaceAll("'", "\'");
+	                                	
+	                                	JsonFactory factory = jsonMapper.getJsonFactory();
+	                                	JsonParser jp = factory.createJsonParser(schemaJson);
+	                                	JsonNode actualObj = jsonMapper.readTree(jp);
+	                                	if(actualObj.get("type")!=null)
+	                                	{
+	                                		if(actualObj.get("type").getTextValue().equals("array"))
+	                                		{
+	                                			actualObj = actualObj.get("items");
+	                                			if(actualObj.get("type")!=null)
+	    	                                	{
+	    	                                		if(actualObj.get("type").getTextValue().equals("any"))
+	    	                                		{
+	    	                                			skipContent = true;
+	    	                                			if(parameters.size()==2)
+	    	                                			{
+		    	                                			parameters.remove(1);
+		    	                                			ViewField viewFieldt = new ViewField();
+		    	                                			viewFieldt.setType("multipartform");
+		    	                                			viewFieldt.setLabel("Parameters");
+		    	                                            parameters.add(viewFieldt);
+	    	                                			}
+	    	                                		}
+	    	                                	}
+	                                		}
+	                                	}
+                                	}
+                                }
+                                
+                                if(!skipContent && contentvf!=null && contentvf.getValue()!=null && !isPrimitive(contentvf.getValue().getClass()))
                                 {
 	                                if(consumes.equals(MediaType.APPLICATION_JSON))
 	                                {
@@ -1149,7 +1197,6 @@ public class TestGeneratorMojo extends AbstractMojo
 	                                	String schemaJson = jsonMapper.generateJsonSchema(contentvf.getValue().getClass()).toString();
 	                                	schemaJson = schemaJson.replaceAll("'", "\'");
 	                                	context.put("schemaJson", schemaJson);
-	                                	
 	                                }
 	                                else if(consumes.equals(MediaType.APPLICATION_XML))
 	                                {
