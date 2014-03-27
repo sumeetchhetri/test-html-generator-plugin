@@ -19,6 +19,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.channels.FileChannel;
@@ -62,6 +64,7 @@ import net.coobird.thumbnailator.Thumbnails;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Component;
@@ -691,7 +694,7 @@ public class TestGeneratorMojo extends AbstractMojo
                 }
             }
 
-            File dir = new File(getTargetDir() + "/" + getUripath() + "/");
+            File dir = new File(getTargetDir() + SystemUtils.FILE_SEPARATOR + getUripath() + SystemUtils.FILE_SEPARATOR);
             dir.mkdirs();
             StringBuilder str = new StringBuilder();
             List<String> lst = new ArrayList<String>();
@@ -883,7 +886,7 @@ public class TestGeneratorMojo extends AbstractMojo
                             	engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
 
                             BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(dir.getAbsolutePath()
-                                    + "/TestLogin.html")));
+                                    + SystemUtils.FILE_SEPARATOR + "TestLogin.html")));
                             fwriter.write(writer.toString());
                             fwriter.close();
 
@@ -1360,7 +1363,7 @@ public class TestGeneratorMojo extends AbstractMojo
                                     else
                                     	engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
 
-                                    String fileName = getTargetDir() + "/" + getUripath() + "/" + claz.getName() + "_"
+                                    String fileName = getTargetDir() + SystemUtils.FILE_SEPARATOR + getUripath() + SystemUtils.FILE_SEPARATOR + claz.getName() + "_"
                                             + method.getName() + ".html";
                                     BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(fileName)));
                                     fwriter.write(writer.toString());
@@ -1573,7 +1576,7 @@ public class TestGeneratorMojo extends AbstractMojo
                         else
                         	engine.mergeTemplate("/templates/formtemplate.vm", context, writer);
 
-                        String fileName = getTargetDir() + "/" + getUripath() + "/" + claz.getName() + ".html";
+                        String fileName = getTargetDir() + SystemUtils.FILE_SEPARATOR + getUripath() + SystemUtils.FILE_SEPARATOR + claz.getName() + ".html";
                         BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(fileName)));
                         fwriter.write(writer.toString());
                         fwriter.close();
@@ -1814,7 +1817,7 @@ public class TestGeneratorMojo extends AbstractMojo
                 	engine.mergeTemplate(fileName, context, writer);
                 }
 
-                BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(dir.getAbsolutePath() + "/"
+                BufferedWriter fwriter = new BufferedWriter(new FileWriter(new File(dir.getAbsolutePath() + SystemUtils.FILE_SEPARATOR
                         + fileName)));
                 fwriter.write(writer.toString());
                 fwriter.close();
@@ -3461,6 +3464,12 @@ public class TestGeneratorMojo extends AbstractMojo
     		 } else if(claz.equals(Integer.class) || claz.equals(int.class)) {
     			 Random rand = new Random();
     			 return new Integer(rand.nextInt(123));
+    		 } else if(claz.equals(BigInteger.class)) {
+    			 Random rand = new Random();
+    			 return new BigInteger(new BigInteger("123456").bitLength(), rand);
+    		 } else if(claz.equals(BigDecimal.class)) {
+    			 Random rand = new Random();
+    			 return new BigDecimal(rand.nextInt(123));
     		 } else if(claz.equals(Short.class) || claz.equals(short.class)) {
     			 Random rand = new Random();
     			 return new Short((short)rand.nextInt(123));
@@ -3589,7 +3598,8 @@ public class TestGeneratorMojo extends AbstractMojo
                 || claz.equals(Long.class) || claz.equals(Double.class) || claz.equals(Float.class)
                 || claz.equals(Boolean.class) || claz.equals(int.class) || claz.equals(short.class)
                 || claz.equals(long.class) || claz.equals(double.class) || claz.equals(float.class)
-                || claz.equals(boolean.class) || claz.equals(Number.class) || claz.equals(Date.class));
+                || claz.equals(boolean.class) || claz.equals(Number.class) || claz.equals(Date.class)
+                || claz.equals(BigInteger.class) || claz.equals(BigDecimal.class));
     }
     
     private void setValidation(Type claz, ViewField vf) {
@@ -3597,7 +3607,8 @@ public class TestGeneratorMojo extends AbstractMojo
     	{
 	    	if (claz.equals(Integer.class) || claz.equals(Short.class)
 	                || claz.equals(Long.class) || claz.equals(int.class) || claz.equals(short.class)
-	                || claz.equals(long.class) || claz.equals(Number.class))
+	                || claz.equals(long.class) || claz.equals(Number.class) || claz.equals(BigInteger.class) 
+	                || claz.equals(BigDecimal.class))
 	    	{
 	    		vf.getValidations().add(new Validation("number"));
 	    	}
